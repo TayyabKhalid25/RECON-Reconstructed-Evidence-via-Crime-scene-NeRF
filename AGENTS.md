@@ -71,7 +71,8 @@ stuff" is worse than no entry.
   upgrades mid semester.
 - Numbers land in `docs/RESULTS.md` the day they are produced, with date and machine.
 - The Jira board (project `FTW`) mirrors reality: In Progress when work starts, In Review when
-  the PR opens, Done only after merge. Never touch tickets titled with someone else's name.
+  the PR opens, Done only after merge. Always comment the substance before you close or move a
+  ticket, never after. Never touch tickets titled with someone else's name.
   Full etiquette: the `managing-jira-tickets` skill.
 - Do not overclaim in any document: claims stay consistent with the stated objectives
   (28 dB PSNR, 2 cm positional accuracy). Version-sensitive facts get flagged for verification,
