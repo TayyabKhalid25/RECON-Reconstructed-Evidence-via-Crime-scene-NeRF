@@ -21,6 +21,9 @@ Format: date, driver, machine, goal, then a running account, then handoff state.
   subfolder artifacts.
 - Added `AGENTS.md` with the session log rule and repo health rules.
 - Moved the handbook into `docs/`.
+- Added the branch/PR/test workflow to `AGENTS.md`: no direct commits to main, cross review
+  before merge, unit tests ship with the code, CI on PRs once tests exist. That commit is
+  itself the last direct push to main.
 
 **Handoff:** repo skeleton committed. Nothing runs yet anywhere. Next steps: Wahaj starts the
 Track A first-light checklist on the Legion (handbook Section 05), Faizan scaffolds `web/`,

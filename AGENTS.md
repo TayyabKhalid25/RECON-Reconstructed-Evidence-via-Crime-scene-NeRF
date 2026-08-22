@@ -21,6 +21,33 @@ Maintain `docs/SESSION_LOG.md`. Do not treat it as an end-of-session chore:
 If a session dies mid-work, the log is the recovery path. An entry that only says "worked on
 stuff" is worse than no entry.
 
+## Branches, PRs, and tests
+
+- **No direct commits to main.** All work happens on a feature branch named
+  `<track>/<short-description>` (`gpu/colmap-worker`, `web/job-endpoints`, `unity/marker-align`)
+  and lands via a pull request.
+- **Someone other than the author reviews and merges.** The author never merges their own PR.
+  With three people there is always a reviewer; if a PR sits unreviewed for two days, say so in
+  the group chat rather than self-merging.
+- **Keep PRs small and rebased.** Rebase on main before opening and before merging. A PR that
+  touches one thing gets reviewed the same day; a two-week branch gets conflict surgery.
+- **Unit tests ship with the code, not after it.** Every PR that adds behaviour adds tests for
+  it. The natural targets per track:
+  - `web/`: endpoint handlers, job state transitions (illegal transitions rejected), the
+    custody hash chain (verify passes, then tamper a row and verify fails), SHA-256 on upload.
+  - `gpu/`: metadata.json writer against the schema, the frame conversion (a known point in,
+    the expected Unity-convention point out), unitScale math from marker detection.
+  - `Unity/`: Unity Test Framework, starting with ballistics against the analytic parabola
+    (a drag-free shot must match it), spatter ellipse ratio equal to sin of incidence angle.
+- **Main stays demoable.** Main is what gets shown at every gate. If a merge breaks the demo
+  path, fixing it outranks new work.
+- **CI when the first tests exist:** a GitHub Actions workflow running lint plus unit tests on
+  every PR, and a passing run required before merge. Unity tests can stay local if CI minutes
+  or licensing make them awkward; web and gpu tests are cheap to run in CI from day one.
+- **Never force-push main.** Force-push on your own feature branch is fine.
+- **Secrets never enter git.** Connection strings and keys live in `.env`, shared privately.
+  If a secret does land in a commit, rotating it is the fix; deleting the commit is not enough.
+
 ## Rules that keep the repo healthy
 
 - Never commit videos, images datasets, `.ply`, `.splat`, or anything in `captures/`,
