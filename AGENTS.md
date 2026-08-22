@@ -10,12 +10,12 @@ follow it.
 
 ## Session log, non negotiable
 
-Every working session gets its own file in `docs/sessions/`, named
-`YYYY-MM-DD-<name>-<slug>.md` (e.g. `2026-08-24-faizan-job-endpoints.md`) so every log is
-dated and says whose it is, and no file grows unbounded. Format and rules:
-`docs/sessions/README.md`. Do not treat it as an end-of-session chore:
+One session = one working day. Each person keeps one file per day in `docs/sessions/`, named
+`YYYY-MM-DD-<name>.md` (e.g. `2026-08-24-faizan.md`) so every log is dated and says whose it
+is. A second sitting the same day appends a `##` section to the same file, never a second
+file. Format and rules: `docs/sessions/README.md`. Do not treat it as an end-of-session chore:
 
-- **At session start**, create the file: date, who is driving, machine, goal.
+- **At the day's first sitting**, create the file: date, who is driving, machine, goal.
 - **As you work**, keep it updated after each meaningful step: files changed, commands that
   mattered, decisions taken and why, anything measured (times, VRAM, PSNR, FPS also goes to
   `docs/RESULTS.md`).
