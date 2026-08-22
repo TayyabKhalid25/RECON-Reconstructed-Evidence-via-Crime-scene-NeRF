@@ -70,7 +70,7 @@ stuff" is worse than no entry.
 - Record exact installed versions in `docs/STACK.md` the day you install them. No silent
   upgrades mid semester.
 - Numbers land in `docs/RESULTS.md` the day they are produced, with date and machine.
-- The Jira board (project `REC`) mirrors reality: In Progress when work starts, In Review when
+- The Jira board (project `FTW`) mirrors reality: In Progress when work starts, In Review when
   the PR opens, Done only after merge. Never touch tickets titled with someone else's name.
   Full etiquette: the `managing-jira-tickets` skill.
 - Do not overclaim in any document: claims stay consistent with the stated objectives
