@@ -31,6 +31,12 @@ stuff" is worse than no entry.
 - **Someone other than the author reviews and merges.** The author never merges their own PR.
   With three people there is always a reviewer; if a PR sits unreviewed for two days, say so in
   the group chat rather than self-merging.
+- **Emergency exception, and it is recorded.** The repo is private on a free plan, so GitHub
+  does not physically block a self-merge; the rule is discipline. Self-merging is allowed only
+  when something genuinely urgent is on fire (a graded gate is hours away, or main is broken
+  and blocking everyone). Even then: say it in the group chat first, note "self-merged, reason"
+  on the PR and in the session log, and the change still gets a retroactive review within two
+  days. "I wanted to keep moving" is not urgent.
 - **Keep PRs small and rebased.** Rebase on main before opening and before merging. A PR that
   touches one thing gets reviewed the same day; a two-week branch gets conflict surgery.
 - **Unit tests ship with the code, not after it.** Every PR that adds behaviour adds tests for
