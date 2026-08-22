@@ -1,17 +1,18 @@
 # Session logs
 
-One file per working session, so no file grows unbounded and every log says whose it is.
+One session = one working day. One file per person per day, so no file grows unbounded and
+every log says whose it is.
 
 ## Naming
 
 ```
-YYYY-MM-DD-<name>-<slug>.md        e.g. 2026-08-24-faizan-job-endpoints.md
+YYYY-MM-DD-<name>.md        e.g. 2026-08-24-faizan.md
 ```
 
 - Date first so files sort chronologically.
 - `<name>` is tayyab, wahaj, or faizan. No anonymous logs, ever.
-- `<slug>` is two or three words on what the session is about. A second session by the same
-  person on the same day gets a different slug, or `-2` if it is genuinely the same topic.
+- Worked more than once in a day? Same file, add a `##` section per chunk and refresh the
+  handoff at the bottom. Never create a second file for the same person and day.
 
 ## Format inside the file
 
@@ -29,7 +30,8 @@ the exact next step.
 
 ## Rules
 
-- Created at session start, updated during, closed with the handoff before the session ends.
+- Created at the day's first sitting, updated during work, handoff refreshed before stepping
+  away.
 - The handoff is the point: the next session (any of us, or an agent) starts cold in under a
   minute from it.
 - Do not edit someone else's log except to fix a broken link.
