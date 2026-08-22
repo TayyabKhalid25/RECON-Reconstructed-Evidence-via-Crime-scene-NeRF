@@ -16,10 +16,16 @@ untracked `.env`.
 
 | Moment | Board action |
 |---|---|
-| Work starts | Move to In Progress, assign the person actually driving |
-| PR opens | Move to In Review; the branch name (`gpu/FTW-14-first-light`) and PR title carry the key so it links |
-| PR merges | Move to Done |
+| Work starts | Comment what you are about to do, then move to In Progress and assign the person actually driving |
+| PR opens | Comment the PR link, then move to In Review; the branch name (`gpu/FTW-14-first-light`) and PR title carry the key so it links |
+| PR merges | Comment the evidence it is really done, then move to Done |
 | Work stalls | Leave In Progress, comment what it is blocked on |
+
+**Always comment before you close or move a ticket.** The comment lands first, the transition
+second, every time. A column move on its own tells the other two that something changed but not
+what, and by the time anyone asks, the reason is gone. What goes in the comment is the substance
+behind the move: the measurement, the PR link, the blocker, the reason this is finished. That is
+not the same as narrating the move itself, which stays noise.
 
 **Done means merged and verified, never "the code is written".** Query the available
 transitions per ticket instead of hardcoding transition ids; team-managed boards renumber them.
@@ -39,8 +45,10 @@ transitions per ticket instead of hardcoding transition ids; team-managed boards
 - **Never grab or reshape someone else's ticket.** A ticket with a teammate's name in the
   title belongs to them even while unassigned (they have not joined the space yet). Don't
   assign it to anyone else, don't rewrite their descriptions; add a comment instead.
-- **Comment only substance:** a decision taken, a blocker, a measurement, a scope change.
-  Column moves speak for themselves; "moving this to In Progress" as a comment is noise.
+- **Comment only substance:** a decision taken, a blocker, a measurement, a scope change, the
+  evidence behind a close. Every move gets one of those first (see the lifecycle table). What is
+  still noise is narrating the transition itself: "moving this to In Progress" says nothing that
+  the column does not already say.
 - **Scope grows, tickets split.** New requirements become a new linked ticket, not a silently
   expanding old one.
 - **Never delete a ticket.** A dead ticket is closed with a comment saying why; deletion
@@ -51,6 +59,7 @@ transitions per ticket instead of hardcoding transition ids; team-managed boards
 ## Red flags
 
 - A ticket moved to Done with its PR still open
+- A close or a column move with no comment before it
 - A comment that restates a column move
 - Editing a description on a ticket titled with someone else's name
 - Creating a ticket without searching for an existing one first
