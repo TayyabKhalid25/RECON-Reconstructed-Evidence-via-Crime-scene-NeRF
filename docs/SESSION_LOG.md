@@ -5,6 +5,23 @@ Format: date, driver, machine, goal, then a running account, then handoff state.
 
 ---
 
+## 2026-08-22 (later) · Wahaj · MacBook Air
+
+**Goal:** agent skills for the repo.
+
+- Added six project skills under `.claude/skills/`: session-logging, running-reconstruction,
+  changing-the-contract, debugging-frames-and-scale, shipping-a-pr, writing-fyp-deliverables.
+- Added `SKILLS.md` index at root with the how-to-add-a-skill rules, pointed to it from
+  AGENTS.md.
+- Skills are distilled from the handbook and AGENTS.md, not yet pressure-tested; fix wording
+  in the PR where a skill misfires.
+
+**Handoff:** shipped as a PR per the new workflow (branch `repo/agent-skills`), awaiting
+review from Tayyab or Faizan. Next steps unchanged: Track A first light on the Legion,
+proposal defect list before 4 Sep.
+
+---
+
 ## 2026-08-22 · Wahaj · MacBook Air
 
 **Goal:** stand the repo up to the handbook's layout.
