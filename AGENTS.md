@@ -10,13 +10,16 @@ follow it.
 
 ## Session log, non negotiable
 
-Maintain `docs/SESSION_LOG.md`. Do not treat it as an end-of-session chore:
+Every working session gets its own file in `docs/sessions/`, named
+`YYYY-MM-DD-<name>-<slug>.md` (e.g. `2026-08-24-faizan-job-endpoints.md`) so every log is
+dated and says whose it is, and no file grows unbounded. Format and rules:
+`docs/sessions/README.md`. Do not treat it as an end-of-session chore:
 
-- **At session start**, append a new entry: date, who is driving, machine, goal.
-- **As you work**, keep the entry updated after each meaningful step: files changed, commands
-  that mattered, decisions taken and why, anything measured (times, VRAM, PSNR, FPS also goes
-  to `docs/RESULTS.md`).
-- **Before the session ends**, finish the entry with state of the tree (committed or not),
+- **At session start**, create the file: date, who is driving, machine, goal.
+- **As you work**, keep it updated after each meaningful step: files changed, commands that
+  mattered, decisions taken and why, anything measured (times, VRAM, PSNR, FPS also goes to
+  `docs/RESULTS.md`).
+- **Before the session ends**, close it with state of the tree (branch, committed or not),
   what is broken or half done, and the exact next step so the next session starts cold in
   under a minute.
 
