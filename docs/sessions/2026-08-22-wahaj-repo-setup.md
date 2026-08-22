@@ -1,11 +1,4 @@
-# Session log
-
-Newest entry at the top. Every working session gets one, updated while the work happens.
-Format: date, driver, machine, goal, then a running account, then handoff state.
-
----
-
-## 2026-08-22 · Wahaj · MacBook Air
+# 2026-08-22 · Wahaj · MacBook Air
 
 **Goal:** stand the repo up to the handbook's layout.
 
@@ -29,5 +22,3 @@ Format: date, driver, machine, goal, then a running account, then handoff state.
 Track A first-light checklist on the Legion (handbook Section 05), Faizan scaffolds `web/`,
 Tayyab creates the Unity project and gets a splat rendering on a real phone. Proposal defect
 list is the other open front, due 4 Sep.
-
----

@@ -4,17 +4,22 @@ This is RECON, an FYP at FAST Lahore: phone video in, 3D Gaussian splat scene ou
 Unity AR with a physics overlay. Three tracks: `gpu/` (Wahaj), `web/` (Faizan), `Unity/`
 (Tayyab). Read `docs/Forensic-NeRF-FYP-Handbook.md` before doing anything substantial; it is the
 single source of truth for the plan, and `docs/API.md` is the contract the three tracks build
-against.
+against. Project skills for common situations (reconstruction runs, contract changes, frame
+bugs, PRs, graded deliverables) are indexed in `SKILLS.md`; when one matches the task at hand,
+follow it.
 
 ## Session log, non negotiable
 
-Maintain `docs/SESSION_LOG.md`. Do not treat it as an end-of-session chore:
+Every working session gets its own file in `docs/sessions/`, named
+`YYYY-MM-DD-<name>-<slug>.md` (e.g. `2026-08-24-faizan-job-endpoints.md`) so every log is
+dated and says whose it is, and no file grows unbounded. Format and rules:
+`docs/sessions/README.md`. Do not treat it as an end-of-session chore:
 
-- **At session start**, append a new entry: date, who is driving, machine, goal.
-- **As you work**, keep the entry updated after each meaningful step: files changed, commands
-  that mattered, decisions taken and why, anything measured (times, VRAM, PSNR, FPS also goes
-  to `docs/RESULTS.md`).
-- **Before the session ends**, finish the entry with state of the tree (committed or not),
+- **At session start**, create the file: date, who is driving, machine, goal.
+- **As you work**, keep it updated after each meaningful step: files changed, commands that
+  mattered, decisions taken and why, anything measured (times, VRAM, PSNR, FPS also goes to
+  `docs/RESULTS.md`).
+- **Before the session ends**, close it with state of the tree (branch, committed or not),
   what is broken or half done, and the exact next step so the next session starts cold in
   under a minute.
 
@@ -29,6 +34,12 @@ stuff" is worse than no entry.
 - **Someone other than the author reviews and merges.** The author never merges their own PR.
   With three people there is always a reviewer; if a PR sits unreviewed for two days, say so in
   the group chat rather than self-merging.
+- **Emergency exception, and it is recorded.** The repo is private on a free plan, so GitHub
+  does not physically block a self-merge; the rule is discipline. Self-merging is allowed only
+  when something genuinely urgent is on fire (a graded gate is hours away, or main is broken
+  and blocking everyone). Even then: say it in the group chat first, note "self-merged, reason"
+  on the PR and in the session log, and the change still gets a retroactive review within two
+  days. "I wanted to keep moving" is not urgent.
 - **Keep PRs small and rebased.** Rebase on main before opening and before merging. A PR that
   touches one thing gets reviewed the same day; a two-week branch gets conflict surgery.
 - **Unit tests ship with the code, not after it.** Every PR that adds behaviour adds tests for

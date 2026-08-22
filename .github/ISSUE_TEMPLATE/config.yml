@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Build handbook
+    url: https://github.com/TayyabKhalid25/RECON-Reconstructed-Evidence-via-Crime-scene-NeRF/blob/main/docs/Forensic-NeRF-FYP-Handbook.md
+    about: Check the handbook before filing planning questions, most answers are in it.
