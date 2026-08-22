@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  # Runs from day one: keeps binaries and oversized files out of the repo.
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No banned binaries tracked
+        run: |
+          banned=$(git ls-files | grep -Ei '\.(ply|splat|mp4|mov|avi|mkv)$' || true)
+          if [ -n "$banned" ]; then
+            echo "These file types never enter git (see AGENTS.md):"
+            echo "$banned"
+            exit 1
+          fi
+      - name: No files over 10 MB tracked
+        run: |
+          big=$(git ls-files | while read -r f; do
+            [ -f "$f" ] && [ "$(wc -c < "$f")" -gt 10485760 ] && echo "$f"
+          done || true)
+          if [ -n "$big" ]; then
+            echo "Files over 10 MB tracked, move them out of git:"
+            echo "$big"
+            exit 1
+          fi
+      - name: No .env committed
+        run: |
+          leaked=$(git ls-files | grep -E '(^|/)\.env(\..+)?$' | grep -v '.env.example' || true)
+          if [ -n "$leaked" ]; then
+            echo "Env files committed, rotate every secret in them now:"
+            echo "$leaked"
+            exit 1
+          fi
+
+  # Activates by itself once web/package.json exists; green no-op until then.
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect web app
+        id: has
+        run: echo "web=$([ -f web/package.json ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.has.outputs.web == 'yes'
+        with:
+          node-version: 20
+      - name: Install
+        if: steps.has.outputs.web == 'yes'
+        working-directory: web
+        run: npm ci
+      - name: Lint and test
+        if: steps.has.outputs.web == 'yes'
+        working-directory: web
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+
+  # Activates by itself once gpu/ contains Python; green no-op until then.
+  gpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect python
+        id: has
+        run: echo "py=$([ -n "$(find gpu -name '*.py' -print -quit 2>/dev/null)" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.has.outputs.py == 'yes'
+        with:
+          python-version: "3.11"
+      - name: Lint
+        if: steps.has.outputs.py == 'yes'
+        run: |
+          pip install ruff
+          ruff check gpu
+      - name: Test
+        if: steps.has.outputs.py == 'yes'
+        run: |
+          pip install pytest
+          if [ -d gpu/tests ]; then pip install -r gpu/requirements.txt 2>/dev/null || true; pytest gpu/tests; else echo "no tests yet"; fi
+
+  # Unity tests stay local per AGENTS.md; CI does not attempt them.

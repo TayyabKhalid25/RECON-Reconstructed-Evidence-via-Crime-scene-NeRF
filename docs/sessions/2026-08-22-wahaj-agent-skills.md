@@ -23,7 +23,14 @@
 - Restructured session logs: one file per session in `docs/sessions/`, named
   `YYYY-MM-DD-name-slug.md`, format in `docs/sessions/README.md`. The old single
   `docs/SESSION_LOG.md` is gone, its two entries split into dated files.
+- Added devops plumbing (same PR): PR template with the AGENTS.md checklist, task and bug
+  issue templates, CI workflow (hygiene job blocks binaries, oversized files, and committed
+  .env from day one; web and gpu jobs self-activate when `web/package.json` and `gpu/*.py`
+  appear), `.mcp.json` wiring the Atlassian remote MCP server for the new Jira space (each
+  person OAuths on first use), and `docs/NETWORK.md` with the Tailscale setup.
 
 **Handoff:** shipped as PR #1 (branch `repo/agent-skills`), awaiting review from Tayyab or
 Faizan. Next steps unchanged: Track A first light on the Legion, proposal defect list before
-4 Sep. Jira setup guidance given to the team; no tooling committed for it yet.
+4 Sep. Jira space exists; Tayyab still has to install "GitHub for Jira" and run
+/install-github-app for Claude PR reviews (repo owner steps). Tailscale installs are manual
+per machine, steps in docs/NETWORK.md.
