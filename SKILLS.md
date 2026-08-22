@@ -25,6 +25,7 @@ the agent reads and follows that skill before improvising.
 | [debugging-frames-and-scale](.claude/skills/debugging-frames-and-scale/SKILL.md) | Mirrored, sideways, wrong-size, or misaligned scenes |
 | [changing-the-contract](.claude/skills/changing-the-contract/SKILL.md) | Any edit to docs/API.md, the state machine, the data model, or metadata.json |
 | [writing-fyp-deliverables](.claude/skills/writing-fyp-deliverables/SKILL.md) | Proposal, report chapters, TC-XX test cases, Turnitin, presentations |
+| [managing-jira-tickets](.claude/skills/managing-jira-tickets/SKILL.md) | Creating, updating, transitioning, or searching REC tickets; starting or finishing tracked work |
 
 ## Process skills (vendored from Superpowers)
 
