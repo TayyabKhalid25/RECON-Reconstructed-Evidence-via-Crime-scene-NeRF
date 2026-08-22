@@ -1,0 +1,16 @@
+{
+  "sceneId": "scn_0001",
+  "plyFile": "scene.ply",
+  "splatCount": 842113,
+  "sourceFrames": 240,
+  "handedness": "left",
+  "upAxis": "y",
+  "unitScale": 0.0,
+  "scaleMethod": "marker",
+  "boundingBox": { "min": [0, 0, 0], "max": [0, 0, 0] },
+  "originHint": [0, 0, 0],
+  "metrics": { "psnr": 0.0, "ssim": 0.0, "lpips": 0.0 },
+  "training": { "iterations": 0, "minutes": 0.0, "peakVramMb": 0 },
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "createdAt": "2026-08-22T00:00:00Z"
+}

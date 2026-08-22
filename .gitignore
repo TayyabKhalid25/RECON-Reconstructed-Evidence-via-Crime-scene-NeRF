@@ -254,3 +254,18 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+
+# RECON: large binaries and per-track artifacts never enter git
+captures/
+outputs/
+datasets/
+*.ply
+*.mp4
+*.mov
+*.splat
+
+# web track lives in a subfolder, so the root-anchored rules above miss it
+web/node_modules/
+web/.next/
+web/.env
+!.env.example
