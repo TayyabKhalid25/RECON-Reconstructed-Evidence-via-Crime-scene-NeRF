@@ -1,13 +1,13 @@
 ---
 name: managing-jira-tickets
-description: Use when creating, updating, transitioning, commenting on, or searching Jira tickets in the REC project, or when starting or finishing work that a ticket tracks.
+description: Use when creating, updating, transitioning, commenting on, or searching Jira tickets in the FTW project, or when starting or finishing work that a ticket tracks.
 ---
 
 # Managing Jira tickets
 
 ## Overview
 
-The board (`antiwahaj.atlassian.net`, project `REC`, team-managed) mirrors reality. A ticket
+The board (`reconfyp.atlassian.net`, project `FTW`, team-managed) mirrors reality. A ticket
 column that lies about the state of the work is worse than no board. Access: the `atlassian`
 MCP server from `.mcp.json` (OAuth once via `/mcp`), or REST with the `JIRA_*` values in the
 untracked `.env`.
@@ -17,7 +17,7 @@ untracked `.env`.
 | Moment | Board action |
 |---|---|
 | Work starts | Move to In Progress, assign the person actually driving |
-| PR opens | Move to In Review; the branch name (`gpu/REC-16-first-light`) and PR title carry the key so it links |
+| PR opens | Move to In Review; the branch name (`gpu/FTW-14-first-light`) and PR title carry the key so it links |
 | PR merges | Move to Done |
 | Work stalls | Leave In Progress, comment what it is blocked on |
 
@@ -26,7 +26,7 @@ transitions per ticket instead of hardcoding transition ids; team-managed boards
 
 ## Creating tickets
 
-- **Search first** (`project=REC AND text ~ "..."`). A duplicate ticket splits the discussion.
+- **Search first** (`project=FTW AND text ~ "..."`). A duplicate ticket splits the discussion.
 - Title states the deliverable; description carries observable done-when criteria ("phone
   loads http://legion:3000", not "works").
 - Labels from the fixed set: `track-gpu` / `track-web` / `track-unity` / `infra` / `proposal`.
