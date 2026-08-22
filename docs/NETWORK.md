@@ -9,8 +9,11 @@ big `.ply` files move machine to machine without a cloud middleman.
 1. **One of us creates the tailnet** at tailscale.com (sign in with GitHub or Google). The
    free plan covers 3 users and 100 devices, which is exactly us. `verify`
 2. **Invite the other two** from the admin console (Users > Invite).
-3. **Everyone installs it** on: Windows (Legion, Victus, desktop), macOS (both MacBook Airs),
-   and the AR test phones (Android/iOS apps). Log in to the same tailnet.
+3. **Install it on the CUDA machines and phones only**: Windows (Legion, Victus, desktop) and
+   the AR test phones (Android/iOS apps), all logged into the same tailnet. **The MacBooks
+   stay off the tailnet**: they are office-issued, and we do not join managed devices to a
+   personal network. Consequence: anything a phone or teammate must reach (the dev API above
+   all) runs on a Windows/WSL machine; the Macs develop against localhost.
 4. Turn on **MagicDNS** in the admin console so machines are reachable by name
    (`legion`, `victus`, `desktop`) instead of 100.x.x.x addresses.
 
