@@ -27,7 +27,7 @@ once you have joined.
 **Conventions:**
 
 - Branch names carry the ticket key: `gpu/FTW-14-first-light`, `web/FTW-15-scaffold`.
-- Mention the key (`FTW-14`) in commits and PRs; once the GitHub-for-Jira app is installed
-  (FTW-17), those auto-link to the ticket.
+- Mention the key (`FTW-14`) in commits and PRs; the GitHub-for-Jira app is installed, so
+  those auto-link to the ticket.
 - Labels: `track-gpu` / `track-web` / `track-unity` / `infra` / `proposal`. Due-dated tickets
   are real deadlines from the handbook, not decoration.
