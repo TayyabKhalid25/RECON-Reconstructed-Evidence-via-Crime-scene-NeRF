@@ -4,7 +4,7 @@
 
 ## Why
 
-<!-- The reason, and a link to the Jira ticket (REC-xx) or issue if one exists. -->
+<!-- The reason, and a link to the Jira ticket (FTW-xx) or issue if one exists. -->
 
 ## Checklist
 
