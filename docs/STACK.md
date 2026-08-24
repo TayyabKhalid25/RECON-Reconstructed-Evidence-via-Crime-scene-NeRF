@@ -15,7 +15,7 @@ that breaks one track in November is a self inflicted wound.
 | CUDA toolkit | 12.x | 12.6, nvcc V12.6.85 | W |
 | Python | 3.10 or 3.11, whatever Nerfstudio's docs specify | 3.11.16 (Miniforge env `recon`) | W |
 | PyTorch | matched to the CUDA toolkit | 2.7.1+cu126 (torchvision 0.22.1+cu126) | W |
-| COLMAP | 3.x | | W |
+| COLMAP | 3.x | 3.13.0, conda-forge build `cuda_126h5ca8012_3` | W |
 | Nerfstudio (splatfacto) | current stable | | W |
 | Unity | 6 LTS with URP | | T |
 | AR Foundation | 6.x | | T |
@@ -38,6 +38,22 @@ by months. Use the version the reconstruction toolchain's own install docs speci
   torch 2.7.1's bundled arch list stops at sm_86 and sm_90 with no sm_89 cubin — it runs here via
   binary compatibility inside the 8.x family. Anything we compile ourselves (gsplat, tiny-cuda-nn)
   should target 8.9 explicitly, both for correctness of intent and to avoid compiling every arch.
+- COLMAP comes from conda-forge, **not** apt: jammy's `colmap` package is built without CUDA,
+  and a source build needs a newer CMake than jammy ships. Installed into the same `recon` env
+  after a `--dry-run` confirmed it was install-only (160 packages, 392 MB, no upgrades,
+  downgrades or removals, and it does not touch python or numpy). torch was re-verified against
+  the GPU afterwards and is unaffected. Env is now 6.8 GB.
+- Pick a **3.x** COLMAP build deliberately. conda-forge also ships 4.x, which is outside the
+  pinned range and would change the CLI that `ns-process-data` drives.
+- The CUDA build matters more in WSL than it looks: COLMAP's non-CUDA GPU SIFT path goes through
+  OpenGL and wants a display, which a headless WSL box does not have. The CUDA path needs no
+  display.
+- `ceres-solver` is the **CPU** build (`cpugplhc142d66_210`), so bundle adjustment runs on CPU
+  while SIFT extraction and matching use the GPU. Fine at room scale; worth knowing if BA time
+  ever dominates a run.
+- conda pulled `cuda-version 12.9` and `cuda-cudart 12.9.79` alongside torch's pip-installed
+  cu126 runtime. Both coexist: torch resolves its own bundled libraries, and it was verified
+  working after the COLMAP install. Do not "align" these by hand.
 - Nerfstudio's published install docs still say CUDA 11.8 with torch 2.1.2. That is stale: its
   current `pyproject.toml` asks only for `torch>=1.13.1` and dev-pins torch 2.7.1 with gsplat
   1.4.0. The proposal's CUDA 12.x pin stands; do not "fix" it to 11.8.
