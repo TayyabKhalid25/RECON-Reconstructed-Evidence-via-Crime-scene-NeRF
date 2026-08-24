@@ -269,3 +269,7 @@ web/node_modules/
 web/.next/
 web/.env
 !.env.example
+
+# generated marker sheets (regenerate with tools/make_marker.py)
+marker-*.pdf
+marker-*.svg

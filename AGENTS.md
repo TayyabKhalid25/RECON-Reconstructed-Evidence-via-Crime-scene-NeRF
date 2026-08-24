@@ -8,6 +8,24 @@ against. Project skills for common situations (reconstruction runs, contract cha
 bugs, PRs, graded deliverables) are indexed in `SKILLS.md`; when one matches the task at hand,
 follow it.
 
+## First order of business, every session
+
+**Before starting new work, check the review queue.** Run `gh pr list` and look at what is
+open. For every PR you did not author, decide one of three things and act on it: review it now,
+say when you will, or say why you cannot. Then start your own work.
+
+- This is what makes "someone other than the author reviews and merges" actually function. That
+  rule is a promise about other people's time; a branch that sits unreviewed converts their
+  finished work into stale work, and stale work turns into conflict surgery.
+- **Reviewing is not optional filler.** A PR blocking a teammate outranks starting your own next
+  ticket. If a PR has been open two days it is already late, per the rule below.
+- Use the `requesting-code-review` and `receiving-code-review` skills; a review that just says
+  "LGTM" is not a review.
+- Never review or approve your own PR. If you are the only person available and the change is
+  genuinely urgent, that is the self-merge exception below, with everything it requires.
+- Note in the session log what you reviewed, or that the queue was empty. "Did not look" is the
+  failure this rule exists to prevent.
+
 ## Session log, non negotiable
 
 One session = one working day. Each person keeps one file per day in `docs/sessions/`, named

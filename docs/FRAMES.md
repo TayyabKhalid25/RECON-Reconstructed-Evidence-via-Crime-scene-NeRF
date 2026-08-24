@@ -20,6 +20,25 @@ physical size at the scene origin. After reconstruction we detect it, compute me
 unit, and write it to `unitScale` with `scaleMethod: "marker"`. A `unitScale` of 0.0 means the
 scene is not metric and must not be used for any accuracy claim.
 
+### The printed marker, as measured
+
+| Property | Value |
+|---|---|
+| Measured outer edge | **170.0 mm x 170.0 mm** |
+| Measured on | 2026-08-23, steel ruler, printed at 100 percent scale |
+| Paper | A4, matte |
+| Source | `tools/make_marker.py`, seed `20260822`, `marker-a4-170mm.pdf` |
+
+The measured figure is the outer edge of the solid black border ring, not the paper size.
+
+**Unity / AR Foundation:** set the reference image `physicalSize` to **0.170 m**. If it is left
+unset, ARCore estimates the marker size and the alignment scale drifts.
+
+**A reprint must come from the same generator and seed.** The interior pattern is
+pseudo-random; a freshly generated marker is a different image and will not match a reference
+image library built from this one. Reprint from `tools/make_marker.py` unchanged, and
+re-measure, because a different printer may scale differently.
+
 ## Sign off
 
 - [ ] Diagram added showing both frames and the conversion
