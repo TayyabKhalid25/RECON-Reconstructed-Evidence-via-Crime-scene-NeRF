@@ -98,3 +98,9 @@ stuff" is worse than no entry.
   not asserted.
 - Report prose for graded deliverables is written by the team, not generated. Help structure
   and revise, do not produce large blocks of finished prose for pasting into reports.
+
+## Agent Operational Rules
+
+- **Unity MCP Compilation Delays**: The host device takes significant time to compile Unity packages and execute domain reloads. When invoking Unity MCP tools that trigger compilation (such as adding/modifying packages via `Unity_PackageManager_ExecuteAction`), the Unity MCP server will temporarily disconnect. 
+  - **DO NOT** repeatedly poll the Unity server or run diagnostic tools (like `Unity_ReadConsole`) immediately after, as this wastes tokens.
+  - **DO** use the `schedule` tool to initiate a long wait (at least 3-5 minutes) in the background before attempting to reconnect or interact with Unity again.
