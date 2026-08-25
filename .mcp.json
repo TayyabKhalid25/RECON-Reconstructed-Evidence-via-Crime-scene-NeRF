@@ -1,8 +1,14 @@
 {
   "mcpServers": {
     "atlassian": {
-      "type": "sse",
-      "url": "https://mcp.atlassian.com/v1/sse"
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.atlassian.com/v1/mcp",
+        "--transport",
+        "http-first"
+      ]
     }
   }
 }
