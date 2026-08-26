@@ -273,3 +273,6 @@ web/.env
 # generated marker sheets (regenerate with tools/make_marker.py)
 marker-*.pdf
 marker-*.svg
+
+# training exports (metadata.json is recorded under docs/results/ instead)
+exports/
