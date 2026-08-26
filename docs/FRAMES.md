@@ -43,6 +43,28 @@ physical size at the scene origin. After reconstruction we detect it, compute me
 unit, and write it to `unitScale` with `scaleMethod: "marker"`. A `unitScale` of 0.0 means the
 scene is not metric and must not be used for any accuracy claim.
 
+### Computing unitScale
+
+`tools/compute_unitscale.py` implements the `scaleMethod: "marker"` path. It detects the marker's
+solid black border in each frame, triangulates the four corners through the COLMAP poses in
+`transforms.json`, and divides the known 0.170 m edge by the measured edge in scene units.
+
+The discriminator is the border itself: a candidate 4-gon is only accepted if a band just inside
+its outline is dark while the interior is brighter. That rejects the paper sheet, the tabletop,
+floor tiles and phones, and it means the tool measures the **170 mm black edge** rather than the
+**A4 sheet** — confusing those two is a silent ~20 percent scale error.
+
+**It refuses rather than guesses.** The triangulated quad must have four mutually agreeing edges
+and both diagonals at sqrt(2) x edge, within `--tol` (default 12 percent). If no view pair passes,
+it exits non-zero and emits nothing. A wrong `unitScale` is worse than a missing one: 0.0 makes
+the client refuse the scene loudly, whereas a wrong value produces confident, incorrect
+measurements. `--self-test` checks triangulation against synthetic geometry, that a skewed quad is
+rejected, and that corner ordering is rotation invariant.
+
+Report the **spread across view pairs** as the uncertainty. Recovering 170 mm from the marker that
+defined the scale is circular; the spread, and a plausibility check on the scene bounding box, are
+the figures that mean something.
+
 ### The printed marker, as measured
 
 | Property | Value |
