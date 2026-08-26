@@ -7,7 +7,7 @@ table from memory in November is impossible, and Chapter 7's test cases are fill
 
 | Date | Scene | Machine | Frames | Registered % | Iterations | Minutes | Peak VRAM (MB) | PSNR | SSIM | LPIPS | Splats | .ply MB | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | | | | | |
+| 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | - | 31.37 | 0.956 | 0.103 | - | - | First light, reduced iterations |
 
 ## Mobile rendering
 
