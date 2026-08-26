@@ -7,7 +7,19 @@ table from memory in November is impossible, and Chapter 7's test cases are fill
 
 | Date | Scene | Machine | Frames | Registered % | Iterations | Minutes | Peak VRAM (MB) | PSNR | SSIM | LPIPS | Splats | .ply MB | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | not captured | 31.37 | 0.956 | 0.103 | 178333 | 43 | First light. splatfacto, num_downscales 2, 4K source. Eval fps 74.0. Metric: unitScale 0.369573 via marker (2.1% spread). Export in Unity frame (splat_unity.ply) |
+| 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | not sampled | 31.37 | 0.956 | 0.103 | 178333 | 43 | First light. splatfacto, num_downscales 2, 4K source. Eval fps 74.0. Metric: unitScale 0.369573 via marker (2.1% spread). Export in Unity frame (splat_unity.ply) |
+| 2026-08-26 | 1 (VRAM probe) | legion | 304 | 100% | 7000 | 2.3 | **1197** | - | - | - | 180137 | - | Rerun of scene 1 purely to measure VRAM, sampled every 0.5 s. Peak 1197 of 8188 MiB = 14.6%. Max 74 C, 75 W, 2700 MHz, no throttling. Peak host RAM 2.4 GB. Started on battery, switched to mains mid-run: timing indicative, VRAM valid |
+
+### What the VRAM measurement means
+
+Peak VRAM on the locked preset is **1197 MiB of 8188, i.e. 14.6 percent**. At these settings the
+8 GB card is not the binding constraint, which is measured confirmation of the handbook's framing:
+the **phone**, not the training GPU, is the ceiling. There is headroom to raise iterations or
+resolution when quality matters more than loop speed.
+
+The splat budget therefore remains **provisional**. 180 137 splats train comfortably, but nobody
+has measured what a phone does with them; FTW-16 sets the real budget. Full preset and caveats:
+`gpu/PRESET.md`. Raw samples: `docs/results/2026-08-26-scene1-vram-samples.csv`.
 
 ## Mobile rendering
 
