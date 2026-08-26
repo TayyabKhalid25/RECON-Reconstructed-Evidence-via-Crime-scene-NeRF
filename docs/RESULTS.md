@@ -7,7 +7,7 @@ table from memory in November is impossible, and Chapter 7's test cases are fill
 
 | Date | Scene | Machine | Frames | Registered % | Iterations | Minutes | Peak VRAM (MB) | PSNR | SSIM | LPIPS | Splats | .ply MB | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | not captured | 31.37 | 0.956 | 0.103 | 178333 | 43 | First light. splatfacto, num_downscales 2, 4K source. Eval fps 74.0. Non-metric: no marker scale, no metadata.json. Export is Z-up, not yet converted per FRAMES.md |
+| 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | not captured | 31.37 | 0.956 | 0.103 | 178333 | 43 | First light. splatfacto, num_downscales 2, 4K source. Eval fps 74.0. Non-metric: no marker scale, no metadata.json. Export converted to Unity frame via tools/convert_ply_to_unity.py (splat_unity.ply) |
 
 ## Mobile rendering
 

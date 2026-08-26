@@ -13,6 +13,29 @@ Unity client asserts them instead of guessing. If the client ever sees anything 
 
 Never apply a flip on the Unity side. Two conversions cancel out and cost a day to find.
 
+### The converter
+
+`tools/convert_ply_to_unity.py` is that one conversion. Nerfstudio exports Z up, right handed;
+the mapping is `(x, y, z) -> (x, z, y)`, a Y/Z swap, which negates the basis determinant and so
+turns right handed into left handed.
+
+Five things move together, and a converter that only moves positions is wrong in a way that
+looks nearly right:
+
+| Field | Treatment |
+|---|---|
+| positions | swap y, z |
+| normals | swap y, z |
+| `scale_1` / `scale_2` | swapped; they are per-axis extents |
+| `rot_*` quaternion | conjugated by the same swap |
+| `f_rest_*` SH coefficients | degree >= 1 terms are direction dependent, so the basis is permuted and signed |
+
+The script writes `comment Vertical Axis: y` and `comment Handedness: left` into the header, and
+**refuses to run on a file already marked Y up** so a double conversion cannot happen by
+accident. `--unit-scale S` multiplies positions and adds `log(S)` to the log-scales; omit it for
+a non-metric scene. `--self-test` checks the swap, the handedness flip, the scale handling and
+that converting twice is the identity.
+
 ## Scale
 
 Monocular SfM has no absolute scale. Every capture includes the printed marker of known
