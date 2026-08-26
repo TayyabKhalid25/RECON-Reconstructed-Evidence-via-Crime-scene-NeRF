@@ -44,6 +44,22 @@ Scene 1 (304 frames from 4K source, RTX 4060 Laptop 8 GB, WSL2), sampled every 0
 | Max SM clock | 2700 MHz (no throttling observed) |
 | Peak system RAM | 2.4 GB |
 
+## Validated on a second capture
+
+FTW-26 asked for a second capture through this preset without OOM. Scene 2 (4K60 **portrait**, 316
+frames) delivered it:
+
+| | Scene 1 (landscape) | Scene 2 (portrait) |
+|---|---|---|
+| Peak VRAM | 1197 MiB (14.6 %) | **1441 MiB (17.6 %)** |
+| Wall clock | 2 min 17 s | 2 min 07 s |
+| Splats | 180 137 | 251 879 |
+| PSNR | 31.37 | 30.13 |
+
+Peak VRAM stayed under 18 percent across both aspect ratios, so the preset is not scene-specific in
+any way that matters at this scale. Scene 2 produced 40 percent more splats for 244 MiB more VRAM,
+which is the scaling to expect: memory tracks splat count, and splat count tracks scene complexity.
+
 ## What this changes
 
 **8 GB is not the binding constraint at these settings.** The run used 14.6 percent of available

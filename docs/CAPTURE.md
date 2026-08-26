@@ -86,20 +86,26 @@ conda activate recon              # sets TORCH_CUDA_ARCH_LIST=8.9
 python tools/patch_nerfstudio_colmap313.py --check
 ns-process-data video --data ~/datasets/<capture>.mp4 --output-dir ~/datasets/<scene>
 
-# 3. CHECKPOINT: at least ~80 percent of frames registered. Below that, recapture.
+# 3. FIRST: COLMAP can emit several disconnected models and nerfstudio reads
+#    sparse/0 unconditionally. If a stray small model sorts first you get a
+#    bogus "only found poses for 1.27%" while a complete reconstruction sits in
+#    sparse/1. This cost scene 2 an hour of misdiagnosis.
+python tools/pick_colmap_model.py ~/datasets/<scene>
+
+# 4. CHECKPOINT: at least ~80 percent of frames registered. Below that, recapture.
 #    Do not train on bad poses.
 python - <<'PY'
 import json; d=json.load(open('<scene>/transforms.json')); print(len(d['frames']), 'frames posed')
 PY
 
-# 4. train with the locked preset
+# 5. train with the locked preset
 ns-train splatfacto --data ~/datasets/<scene> --max-num-iterations 7000
 
-# 5. scale, frame conversion, metadata
+# 6. scale, frame conversion, metadata
 python tools/compute_unitscale.py --data ~/datasets/<scene>
 python tools/convert_ply_to_unity.py <raw>.ply <scene>_unity.ply
 
-# 6. numbers into docs/RESULTS.md the same day, with date and machine
+# 7. numbers into docs/RESULTS.md the same day, with date and machine
 ```
 
 ## Out of memory
@@ -111,6 +117,18 @@ Turn knobs in this order, and record what you settled on:
 3. raise the densification threshold
 4. prune harder
 5. tighten scene bounds
+
+## Measured: marker size in frame drives scale accuracy
+
+Two captures, same protocol, different marker size in frame:
+
+| | Scene 1 | Scene 2 |
+|---|---|---|
+| Marker detected in | 102 frames | **151 frames** |
+| `unitScale` spread | 2.1 % | **1.86 %** |
+
+Getting the marker larger in frame is the cheapest available improvement to scale accuracy. It costs
+nothing at capture time and cannot be recovered afterwards.
 
 ## Known limitation to state, not hide
 

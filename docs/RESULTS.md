@@ -9,6 +9,62 @@ table from memory in November is impossible, and Chapter 7's test cases are fill
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 2026-08-26 | 1 | legion | 304 | 100% | 7000 | 4.5 | not sampled | 31.37 | 0.956 | 0.103 | 178333 | 43 | First light. splatfacto, num_downscales 2, 4K source. Eval fps 74.0. Metric: unitScale 0.369573 via marker (2.1% spread). Export in Unity frame (splat_unity.ply) |
 | 2026-08-26 | 1 (VRAM probe) | legion | 304 | 100% | 7000 | 2.3 | **1197** | - | - | - | 180137 | - | Rerun of scene 1 purely to measure VRAM, sampled every 0.5 s. Peak 1197 of 8188 MiB = 14.6%. Max 74 C, 75 W, 2700 MHz, no throttling. Peak host RAM 2.4 GB. Started on battery, switched to mains mid-run: timing indicative, VRAM valid |
+| 2026-08-26 | 2 | legion | 316 | 100% | 7000 | 2.1 | **1441** | 30.13 | 0.946 | 0.118 | 251879 | - | Second capture through CAPTURE.md + PRESET.md, no OOM. 4K60 **portrait**. unitScale 0.313341 via marker, spread 1.86% (marker larger in frame than scene 1). Peak 1441 of 8188 MiB = 17.6%. Mains power throughout |
+
+### Scene 2: the preset validated on a second capture
+
+FTW-26 required a second capture through the protocol and preset without OOM. `20260825_161856.mp4`
+(42 s, 4K60 **portrait**) delivered it.
+
+| | Scene 1 | Scene 2 |
+|---|---|---|
+| Aspect | landscape 4K | **portrait 4K** |
+| Frames / registered | 304 / 100 % | 316 / **100 %** |
+| Wall clock | 2 min 17 s | 2 min 07 s |
+| **Peak VRAM** | 1197 MiB (14.6 %) | **1441 MiB (17.6 %)** |
+| Splats | 180 137 | 251 879 |
+| PSNR / SSIM / LPIPS | 31.37 / 0.956 / 0.103 | 30.13 / 0.946 / 0.118 |
+| unitScale | 0.369573 | 0.313341 |
+| Marker detected in | 102 frames | **151 frames** |
+| unitScale spread | 2.1 % | **1.86 %** |
+
+Two captures, two aspect ratios, no OOM, and peak VRAM stayed under 18 percent both times. The
+preset holds.
+
+**The bigger marker paid off measurably.** Scene 2 was shot with the marker larger in frame, and
+detection rose from 102 to 151 frames with the spread tightening from 2.1 to 1.86 percent. That
+confirms the `docs/CAPTURE.md` guidance that scale accuracy is bounded by marker size in frame, and
+it is the cheapest available lever on accuracy.
+
+Slightly lower PSNR than scene 1 with 40 percent more splats is consistent with a wider, more
+complex scene rather than a regression.
+
+### The two-sparse-models trap, and how scene 2 nearly got thrown away
+
+`ns-process-data` initially reported:
+
+```
+Colmap matched 4 images
+COLMAP only found poses for 1.27% of the images. This is low.
+```
+
+That is not what happened. COLMAP's incremental mapper emitted **two** disconnected models:
+`sparse/0` with 4 images and `sparse/1` with all **316**, the latter carrying 71 402 points against
+scene 1's 62 024 — a *better* reconstruction than first light. Nerfstudio reads `sparse/0`
+unconditionally, so it built `transforms.json` from the 4-image fragment and reported catastrophic
+failure.
+
+This presents exactly like a bad capture, and the natural response — reshoot — throws away a good
+take. `tools/pick_colmap_model.py` now detects it, promotes the largest model to `sparse/0`, and
+regenerates `transforms.json`; `--check` reports without changing anything.
+
+Two diagnoses were wrong on the way here and are recorded so nobody repeats them: the run was first
+read as a genuine registration failure, then blamed on motion blur. A sharpness check built on that
+theory flagged **scene 1** — the 100 percent scene — as too blurred, because scene 1 scores *lower*
+variance-of-Laplacian than scene 2 (36 vs 43). Blur was never the cause, and the checker was
+discarded rather than committed. Match quality was near-identical between the two scenes throughout
+(median inliers per verified pair 543 vs 561), which was the clue that the mapper, not the imagery,
+was where the problem lay.
 
 ### What the VRAM measurement means
 
