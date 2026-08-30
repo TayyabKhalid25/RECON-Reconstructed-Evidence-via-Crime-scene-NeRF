@@ -1,8 +1,9 @@
 # Agent instructions for this repo
 
 This is RECON, an FYP at FAST Lahore: phone video in, 3D Gaussian splat scene out, viewed in
-Unity AR with a physics overlay. Three tracks: `gpu/` (Wahaj), `web/` (Faizan), `Unity/`
-(Tayyab). Read `docs/Forensic-NeRF-FYP-Handbook.md` before doing anything substantial; it is the
+Unity AR with a physics overlay. Three tracks: `gpu/` (Wahaj), `web/` (Wahaj), `Unity/`
+(Tayyab leads, Faizan second; Faizan also keeps second-hand duties on `gpu/`). Read
+`docs/Forensic-NeRF-FYP-Handbook.md` before doing anything substantial; it is the
 single source of truth for the plan, and `docs/API.md` is the contract the three tracks build
 against. Project skills for common situations (reconstruction runs, contract changes, frame
 bugs, PRs, graded deliverables) are indexed in `SKILLS.md`; when one matches the task at hand,
