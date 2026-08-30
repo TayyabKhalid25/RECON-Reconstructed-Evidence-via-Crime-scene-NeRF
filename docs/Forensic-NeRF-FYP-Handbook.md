@@ -94,15 +94,20 @@ The proposal commits to a lot. Build it in this order, and treat everything in t
 
 | Person | Owns | CUDA machine | Second machine |
 |---|---|---|---|
-| [T] Tayyab | Track C, Unity AR | Desktop PC, RTX 4060, 8 GB | Surface Book, i7, no CUDA |
-| [W] Wahaj | Track A lead, Track B second pair of hands | Legion 5 16IRX9, i9 14th gen, RTX 4060, 8 GB | MacBook Air M5 13" |
-| [F] Faizan | Track B lead, Track A second pair of hands | Victus 15, i5 13th gen, RTX 4050, 6 GB | MacBook Air M5 13" |
+| [T] Tayyab | Track C lead, Unity AR | Desktop PC, RTX 4060, 8 GB | Surface Book, i7, no CUDA |
+| [W] Wahaj | Track A lead, Track B lead | Legion 5 16IRX9, i9 14th gen, RTX 4060, 8 GB | MacBook Air M5 13" |
+| [F] Faizan | Track C second (with Tayyab), Track A second pair of hands | Victus 15, i5 13th gen, RTX 4050, 6 GB | MacBook Air M5 13" |
+
+> [!NOTE]
+> **Role change, 30 Aug 2026**
+>
+> Original split had Faizan leading Track B (Web) with Wahaj as second pair of hands. As of 30 Aug, **Faizan moves to Track C (Unity) as Tayyab's second**, and **Wahaj takes sole ownership of Track B** in addition to leading Track A. Faizan's Track A second-hand duties (frame extraction, SfM on the Victus) are unchanged. Every `[F]` tag elsewhere in this document that referred to Web/Track B work now reads as `[W]`; `[F]` on a GPU task still means Faizan.
 
 ### What this inventory actually means
 
 - **Wahaj's Legion is the primary training box.** i9 plus 8 GB 4060 is your strongest single machine and COLMAP leans hard on CPU. Primary scenes train here.
 - **Tayyab's desktop 4060 is a wasted asset unless you claim it.** He is doing Unity work, so his GPU sits idle. Register it as a third queue worker in week 3 and it doubles your reconstruction throughput for free.
-- **Faizan's 4050 has 6 GB and is the tightest.** Use it for frame extraction and SfM, and for serving the API, not for the scenes you are going to put in the report.
+- **Faizan's 4050 has 6 GB and is the tightest.** Use it for frame extraction and SfM, not for the scenes you are going to put in the report. Serving the web API is now Wahaj's responsibility.
 - **Neither MacBook can train.** No CUDA. They are for Unity, Xcode, Next.js, and writing. Do not plan any reconstruction on them.
 - **Tayyab owns Unity but has no Mac.** iOS builds need Xcode, which needs macOS. Decide now which of Wahaj or Faizan lends their MacBook Air on iOS build days, or accept Android first and iOS second.
 
@@ -189,12 +194,12 @@ Fill the right column in once, on day one, with the exact versions you install. 
 | [W] A | SfM | COLMAP 3.x. GLOMAP is a faster global alternative worth testing later `verify` | ___ |
 | [W] A | Splat training | Nerfstudio splatfacto, or INRIA reference | ___ |
 | [W] A | Serving | FastAPI plus a queue worker, boto3 if using S3 compatible storage | ___ |
-| [F] B | Runtime | Node 20 LTS or newer LTS | ___ |
-| [F] B | Framework | Next.js, App Router | ___ |
-| [F] B | ORM and DB | Prisma plus PostgreSQL | ___ |
-| [F] B | Queue | Redis plus BullMQ | ___ |
-| [F] B | Auth | JWT sessions, roles in DB | ___ |
-| [F] B | Local dev | Docker Compose for Postgres and Redis | ___ |
+| [W] B | Runtime | Node 20 LTS or newer LTS | ___ |
+| [W] B | Framework | Next.js, App Router | ___ |
+| [W] B | ORM and DB | Prisma plus PostgreSQL | ___ |
+| [W] B | Queue | Redis plus BullMQ | ___ |
+| [W] B | Auth | JWT sessions, roles in DB | ___ |
+| [W] B | Local dev | Docker Compose for Postgres and Redis | ___ |
 | [T] C | Editor | Unity 6 LTS, pin the exact patch `verify` | ___ |
 | [T] C | Pipeline | URP | ___ |
 | [T] C | AR | AR Foundation 6.x plus ARKit and ARCore provider packages | ___ |
@@ -208,7 +213,7 @@ Keep this table in the repo as `STACK.md` and update it in the same commit as an
 
 Goal by end of 30 Aug: all three tracks scaffolded, all three machines able to talk to each other, and one real reconstruction finished. Work in parallel, do not wait on each other.
 
-### Shared infrastructure [F]
+### Shared infrastructure [W]
 
 Redis and Postgres need to be reachable from three different networks, so host them centrally and have every machine connect outward. No port forwarding, no static IPs.
 
@@ -248,7 +253,7 @@ On the Legion, in this order. Do not skip ahead, each step tells you whether the
 >
 > **Memory ceiling.** WSL2 caps how much system RAM it takes by default. If SfM dies on a larger frame set, raise the limit in a `.wslconfig` file on the Windows side before you assume the scene is too big.
 
-### Track B first light [F]
+### Track B first light [W]
 
 - [ ] Scaffold the Next.js app with TypeScript and the App Router in `/web`
 - [ ] Docker Compose with Postgres and Redis for local work, so you are not dependent on the cloud tier while iterating
@@ -288,7 +293,7 @@ PENDING  ->  PROCESSING  ->  READY
                   CANCELLED  (user asked to stop)
 ```
 
-### Data model [F]
+### Data model [W]
 
 Minimum viable, with custody built in from the start. Add fields as you need them, but do not remove the audit table.
 
@@ -410,7 +415,7 @@ From week 3, run the same worker on all three CUDA machines pointed at the share
 
 - **Legion,** Wahaj. Primary. The scenes that go in the report train here.
 - **Desktop,** Tayyab. Second scenes and parameter sweeps. He does not have to operate it, jobs arrive by queue.
-- **Victus,** Faizan. Frame extraction, SfM, and API work. Not report grade training.
+- **Victus,** Faizan. Frame extraction and SfM. Not report grade training.
 
 Record which machine produced which result. When two machines disagree, and they will, you want to know which is which.
 
@@ -426,7 +431,7 @@ Record which machine produced which result. When two machines disagree, and they
 - [ ] Poisson mesh export path working, for colliders
 - [ ] Three physical scenes and three synthetic scenes reconstructed with metrics recorded
 
-## Section 08. Track B, web platform [F]
+## Section 08. Track B, web platform [W]
 
 Least uncertain track technically, which makes it the one to keep ahead of schedule so it is never the thing blocking integration.
 
@@ -618,8 +623,8 @@ Objective 5 promises a structured evaluation over at least three mock scenes. Bu
 | Texture threshold | Anchor success rate against feature density per square metre | Curve, answers Challenge 3 | [T] |
 | Collider fidelity | Identical shots into splat mesh versus baseline colliders at several decimation levels | Impact point divergence in cm, answers Challenge 1 | [T] |
 | Physics validity | Drag free run against the analytic parabola, then a low speed projectile at measured speed and angle | Predicted versus observed impact point | [T] |
-| Latency | Timestamp every stage transition, upload to AR ready | Stacked breakdown per stage | [F] |
-| Custody overhead | Write throughput with and without hash chained logging | Milliseconds per operation, answers Challenge 4 | [F] |
+| Latency | Timestamp every stage transition, upload to AR ready | Stacked breakdown per stage | [W] |
+| Custody overhead | Write throughput with and without hash chained logging | Milliseconds per operation, answers Challenge 4 | [W] |
 | Usability | System Usability Scale with 8 to 10 postgraduate participants | SUS score plus themed comments | [ALL] |
 
 > [!WARNING]
@@ -653,13 +658,13 @@ What actually exists on each date, and the test that proves it. Every acceptance
 | D4 | 13 Sep | **Metric scale, solved.** Reconstructions carry a real `unitScale` and a capture protocol that guarantees a scale reference | Measure a door frame with a tape. Measure the same edge in the scaled reconstruction. Agreement within a couple of centimetres, or the pipeline is not metric yet | [W] |
 | D4a | 14 Sep | **Chapter 4 and Chapter 6 skeletons.** Headings, figure placeholders, and the requirement list derived from the Section 06 contract | Both chapters exist as outlines in the official template with every figure named. Neither is blank on 1 Oct | [ALL] |
 | D5 | 18 Sep `gate` | **Proposal defence.** Faculty panels review the submitted proposal and return written feedback through the committee, so there is likely nothing to present. Confirm the format with your coordinator | Feedback received, read, and converted into repo issues within the same week. Anything affecting scope goes into DII | [ALL] |
-| D6 | 20 Sep | **I2. The web layer carries the asset.** Unity fetches a scene by id over the API instead of from local storage | Replace the file server side. Restart the app. The phone shows the new scene with no rebuild | [F] [T] |
-| D7 | 27 Sep | **Access control.** Login, JWT sessions, three roles enforced on the server | A test per role per route, asserting the denial cases. An investigator cannot fetch another investigator's case, proven by a failing request not a hidden button | [F] |
-| D8 | 04 Oct | **I3. Automated pipeline.** Dashboard upload drives a real GPU worker with no manual step | Upload a video, close the laptop, come back. Status is READY and the asset is downloadable. Zero human intervention in between | [W] [F] |
+| D6 | 20 Sep | **I2. The web layer carries the asset.** Unity fetches a scene by id over the API instead of from local storage | Replace the file server side. Restart the app. The phone shows the new scene with no rebuild | [W] [T] |
+| D7 | 27 Sep | **Access control.** Login, JWT sessions, three roles enforced on the server | A test per role per route, asserting the denial cases. An investigator cannot fetch another investigator's case, proven by a failing request not a hidden button | [W] |
+| D8 | 04 Oct | **I3. Automated pipeline.** Dashboard upload drives a real GPU worker with no manual step | Upload a video, close the laptop, come back. Status is READY and the asset is downloadable. Zero human intervention in between | [W] |
 | D9 | 07 Oct `gate` | **DII report.** Chapters 1, 2, 3, 4 and 6, plus Abstract, Executive Summary and References | Submitted on the official report template. Each track's sections written by the person who built that track | [ALL] |
 | D10 | 11 Oct | **I4. Minimum viable system.** Capture to reconstruction to anchored AR to one ballistic shot with a visible impact point | Run the whole thing three times on three different days. Three passes, or it is not done. This is the deliverable the midterm is graded on | [ALL] |
 | D11 | 16 or 23 Oct `gate` | **Midterm evaluation.** Signed tape bound hard copy with the Mid compliance form delivered to the Academic Office, plus a 7 to 10 minute presentation, plus D10 as the prototype, plus a screen recording as backup | Paperwork accepted, which is what permits you to present at all. Presentation covers every required item in Section 16 and the prototype runs without a rescue | [ALL] |
-| D12 | 01 Nov | **Multi user and custody.** Cloud anchor host and resolve, AES-256-GCM assets at rest, hash chained audit log | Two phones see the twin in the same physical place at the same time. Custody verify endpoint returns pass, then tamper one row directly in the database and confirm it returns fail | [T] [F] |
+| D12 | 01 Nov | **Multi user and custody.** Cloud anchor host and resolve, AES-256-GCM assets at rest, hash chained audit log | Two phones see the twin in the same physical place at the same time. Custody verify endpoint returns pass, then tamper one row directly in the database and confirm it returns fail | [T] [W] |
 | D13 | 08 Nov | **Research apparatus.** Splat derived mesh colliders, all six scenes reconstructed, evaluation harness runnable on demand | One command produces the fidelity metrics table. Identical shots into both collider types give a measurable impact divergence in centimetres | [W] [T] |
 | D14 | 11 Nov `gate` | **DIII report.** Chapter 7 with implementation and test cases, Chapter 10 with conclusions and the mandatory FYP-2 plan, earlier chapters updated with panel feedback, plus both Turnitin reports | Submitted. Every number in Chapter 7 is reproducible from `docs/RESULTS.md`. Plagiarism and AI reports both at 20 percent or less | [ALL] |
 | D15 | 29 Nov | **Full results set.** Every Section 12 metric, three repeats per scene, usability study complete | Every table and figure the final report needs exists as a file. No metric still pending | [ALL] |
@@ -707,7 +712,7 @@ Dates and deadline gates from your own Gantt. Week numbers follow the roadmap, s
 - [ALL] Lock the advisor. Resolve every Section 03 decision.
 - [ALL] Agree the contract, commit `docs/API.md` and sample files.
 - [W] CUDA, COLMAP, training framework, first `.ply`.
-- [F] Repo, cloud Postgres and Redis, Next.js scaffold, schema, upload.
+- [W] Repo, cloud Postgres and Redis, Next.js scaffold, schema, upload.
 - [T] Unity, AR Foundation, AR sample on device, splat on device with frame rate measured.
 
 > **Fri 04 Sep** `gate`
@@ -718,7 +723,7 @@ Dates and deadline gates from your own Gantt. Week numbers follow the roadmap, s
 
 - [ALL] Proposal final pass and submission.
 - [W] Capture protocol written. VRAM safe preset locked.
-- [F] Job endpoints live, dashboard shell.
+- [W] Job endpoints live, dashboard shell.
 - [T] Marker alignment working in editor.
 - **I1 passes:** a real `.ply` renders on the phone, moved by hand.
 
@@ -726,7 +731,7 @@ Dates and deadline gates from your own Gantt. Week numbers follow the roadmap, s
 
 - [ALL] **Start chapters 4 and 6.** Skeletons with named figures by 14 Sep. These are the only DII chapters you have not already half written.
 - [W] Metric scale solved, `unitScale` populated.
-- [F] Worker contract complete, real status transitions.
+- [W] Worker contract complete, real status transitions.
 - [T] Scene fetch from API, marker alignment on device.
 
 > **Fri 18 Sep** `gate`
@@ -736,14 +741,14 @@ Dates and deadline gates from your own Gantt. Week numbers follow the roadmap, s
 **W5** (14 to 20 Sep)
 
 - [ALL] Panel feedback arrives. Act on it this week, while changes are still cheap, and log what you changed for DIII.
-- [F] Auth and JWT.
+- [W] Auth and JWT.
 - [T] Splat budget agreed with Wahaj.
 - **I2 passes:** file travels through the Web API to Unity.
 
 **W6** (21 to 27 Sep)
 
 - [W] Second and third machine registered as workers.
-- [F] RBAC enforced server side. Audit log.
+- [W] RBAC enforced server side. Audit log.
 - [T] Ballistics with substepped sweep, validated against the parabola.
 - [ALL] Chapters 4 and 6 drafted, not just outlined. Chapters 1, 2 and 3 assembled from the proposal into the official template.
 - [ALL] Define the Chapter 7 test case IDs now, empty, so October results have somewhere to land.
@@ -783,14 +788,14 @@ Dates and deadline gates from your own Gantt. Week numbers follow the roadmap, s
 **Hard features resume.**
 
 - [W] Poisson mesh export for colliders.
-- [F] AES-256-GCM at rest, hash chained custody complete.
+- [W] AES-256-GCM at rest, hash chained custody complete.
 - [T] Cloud anchor host and resolve, second device joins.
 
 **W12** (2 to 8 Nov)
 
 - [T] Splat derived mesh colliders. Spatter ellipse proxy.
 - [W] All six scenes reconstructed, three physical and three synthetic, metrics recorded.
-- [F] Rate limiting, error handling, latency instrumentation.
+- [W] Rate limiting, error handling, latency instrumentation.
 - [ALL] Evaluation harness runnable on demand.
 
 > **Wed 11 Nov** `gate`
@@ -837,7 +842,7 @@ The value here is the middle column. Decide the fallback now, while you are calm
 | **Poisson colliders unusable** | Ship AR plane and device mesh colliders, and present the splat mesh comparison as the research finding it is, including where it fails | 8 Nov |
 | **iOS blocked**<br>signing, Mac access, device | Android only for the graded demo, document iOS as designed and partially built. Do not let it consume November | 1 Nov |
 | **Free tier lapses or DB suspends** | Local Docker Compose plus Tailscale is a complete substitute for a demo. Keep it working the whole semester as your fallback, not just at the start | ongoing |
-| **A member is unavailable**<br>illness, other courses | Contract in Section 06 is what makes this survivable. Web and GPU already cross cover. Unity is the single point of failure, so Wahaj or Faizan should be able to at least build and run the Unity project by 1 Nov | 1 Nov |
+| **A member is unavailable**<br>illness, other courses | Contract in Section 06 is what makes this survivable. GPU already cross covers (Wahaj/Faizan) and, since 30 Aug, so does Unity (Tayyab/Faizan). Web is now the single point of failure, Wahaj alone owns it, so at least one other person should be able to build and run `/web` by 1 Nov | 1 Nov |
 | **Evaluation left too late** | Most common way good FYPs lose marks. Harness must run on demand by 8 Nov, even if partial | 8 Nov |
 | **Laptop dies** | Everything except large binaries in git, pushed daily. A dead laptop should cost you a day, not a track | ongoing |
 | **Chapters 4 and 6 not written**<br>due 7 Oct, currently nonexistent | Draft both from the Section 06 contract, which already contains the substance. If they are still skeletons on 28 Sep, one person stops coding entirely and writes until they are done. A weak DII costs marks you cannot earn back with code | 28 Sep |

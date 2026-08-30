@@ -1,6 +1,6 @@
 # Track A · GPU reconstruction
 
-Owner: Wahaj. Faizan is the second pair of hands.
+Owner: Wahaj. Faizan is the second pair of hands (unchanged as of the 30 Aug 2026 role update).
 
 Video in, metric-scaled `.ply` plus `metadata.json` out. COLMAP for SfM poses, Nerfstudio
 `splatfacto` for training, running on Ubuntu 22.04 under WSL2 with CUDA 12.x.
