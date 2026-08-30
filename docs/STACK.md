@@ -54,6 +54,21 @@ by months. Use the version the reconstruction toolchain's own install docs speci
 - conda pulled `cuda-version 12.9` and `cuda-cudart 12.9.79` alongside torch's pip-installed
   cu126 runtime. Both coexist: torch resolves its own bundled libraries, and it was verified
   working after the COLMAP install. Do not "align" these by hand.
+- **Nerfstudio 1.1.5 does not speak COLMAP 3.13's CLI.** COLMAP 3.13 renamed the SIFT option
+  groups; Nerfstudio 1.1.5 still emits the old names, so `ns-process-data` dies with
+  `Failed to parse options - unrecognised option '--SiftExtraction.use_gpu'`:
+
+  | Nerfstudio 1.1.5 emits | COLMAP 3.13 expects |
+  |---|---|
+  | `--SiftExtraction.use_gpu` | `--FeatureExtraction.use_gpu` |
+  | `--SiftMatching.use_gpu` | `--FeatureMatching.use_gpu` |
+
+  Fixed by **`tools/patch_nerfstudio_colmap313.py`**, which edits the installed
+  `nerfstudio/process_data/colmap_utils.py`. The edit lives in `site-packages`, so it **does not
+  survive rebuilding the env or reinstalling nerfstudio** — re-run the script after either.
+  `--check` reports status without changing anything (exit 1 if unpatched), so it is safe in a
+  setup script. This is a direct consequence of pinning COLMAP 3.13.0 in FTW-23; an older 3.x
+  would not need it.
 - **gsplat ships no compiled kernels.** `gsplat-1.4.0` is a `py3-none-any` wheel: pip reports
   success having built no CUDA code at all. The kernels are JIT-compiled by torch on first real
   use, into `~/.cache/torch_extensions/py311_cu126/gsplat_cuda/`, **not** into the env. First

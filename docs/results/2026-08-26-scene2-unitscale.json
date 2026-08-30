@@ -1,0 +1,12 @@
+{
+  "unitScale": 0.313341,
+  "scaleMethod": "marker",
+  "markerEdgeMetres": 0.17,
+  "markerEdgeSceneUnits": 0.54254,
+  "consistentPairs": 27,
+  "pairsTried": 28,
+  "framesDetected": 151,
+  "framesScanned": 304,
+  "relativeSpread": 0.0186,
+  "tolerance": 0.12
+}
