@@ -1,0 +1,52 @@
+# Local Postgres and Redis, so day-to-day work does not depend on the cloud
+# free tiers. The handbook names this path as a complete substitute for a demo
+# if the free tier lapses or a database suspends, so keep it working all
+# semester rather than only at the start.
+#
+#   docker compose up -d      start
+#   docker compose ps         check health
+#   docker compose down       stop, keeps data
+#   docker compose down -v    stop and delete data
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: recon
+      POSTGRES_PASSWORD: recon
+      POSTGRES_DB: recon
+    ports:
+      # Bound to localhost only. Nothing here should be reachable from the
+      # tailnet, let alone the internet: the dev API is what gets exposed,
+      # never the database.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, the app and migrations race the database on a cold start
+      # and fail with a confusing connection error.
+      test: ["CMD-SHELL", "pg_isready -U recon -d recon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Persist the queue across restarts. A dropped job on a laptop reboot looks
+    # exactly like the "job vanished silently" failure the contract warns about.
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

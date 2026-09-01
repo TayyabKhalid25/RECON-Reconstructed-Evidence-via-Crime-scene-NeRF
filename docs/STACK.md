@@ -6,8 +6,8 @@ that breaks one track in November is a self inflicted wound.
 
 | Layer | Pinned | Installed (exact) | Who |
 |---|---|---|---|
-| Node | 20 LTS | | W |
-| Next.js | App Router, current stable | | W |
+| Node | 22 LTS (was 20 LTS, see note) | v22.23.2 | W |
+| Next.js | App Router, current stable | 16.3.4 (React 19.2.8) | W |
 | Prisma | 5 | | W |
 | PostgreSQL | 16 | | W |
 | Redis + BullMQ | current stable | | W |
