@@ -6,11 +6,12 @@ that breaks one track in November is a self inflicted wound.
 
 | Layer | Pinned | Installed (exact) | Who |
 |---|---|---|---|
-| Node | 20 LTS | | F |
-| Next.js | App Router, current stable | | F |
-| Prisma | 5 | | F |
-| PostgreSQL | 16 | | F |
-| Redis + BullMQ | current stable | | F |
+| Node | 22 LTS (was 20 LTS, see note) | v22.23.2 | W |
+| Next.js | App Router, current stable | 16.3.4 (React 19.2.8) | W |
+| Prisma | 5 | | W |
+| PostgreSQL | 16 | | W |
+| Redis + BullMQ | current stable | | W |
+| Asset storage | disk + Tailscale tunnel, no object storage | `ASSET_STORAGE=disk`, decided 2026-09-01 | W |
 | OS (GPU track) | Ubuntu 22.04 under WSL2 | Ubuntu 22.04.5 LTS, WSL2 | W |
 | CUDA toolkit | 12.x | 12.6, nvcc V12.6.85 | W |
 | Python | 3.10 or 3.11, whatever Nerfstudio's docs specify | 3.11.16 (Miniforge env `recon`) | W |
@@ -24,6 +25,33 @@ that breaks one track in November is a self inflicted wound.
 
 Rule for the GPU track: no bleeding edge Python. Torch and CUDA wheels lag new Python releases
 by months. Use the version the reconstruction toolchain's own install docs specify.
+
+## Asset storage, decided 2026-09-01 (handbook Decision 4, FTW-13)
+
+**Assets live on the GPU machine's disk and are served through the existing Tailscale tunnel.
+Cloudflare R2 is not adopted this semester.** `ASSET_STORAGE=disk`, `ASSET_DIR=./storage`.
+
+- **Volume does not justify object storage.** The first-light `.ply` is 44 MB, and captures are
+  1080p per `docs/CAPTURE.md`, not 4K. Six scenes with repeats is single-digit GB; the current
+  working set is 441 MB of `outputs/` plus 85 MB of `exports/`.
+- **Zero budget is the deciding factor.** R2 generally wants a payment method on file even at zero
+  usage. A card on a metered service is a live risk on a student project: one misconfigured loop or
+  an accidentally public bucket is a bill nobody agreed to. Disk has no billing surface.
+- **The tunnel already exists and is proven.** Tailscale with MagicDNS is up (FTW-5, FTW-6),
+  `docs/NETWORK.md` documents phone-to-dev-API over it, and Taildrop already moved the first-light
+  `.ply` between machines. Assets also stay next to where they are produced, which removes an
+  upload step from the worker.
+- **`docs/API.md` does not change.** `GET /api/scenes/:id/asset` is already specified as "the
+  `.ply`, or a redirect to it". Disk serving returns bytes; object storage would return a redirect.
+  Keep that seam — it is what makes this reversible.
+
+Accepted consequences: assets are reachable only while the Legion is up and on the tailnet, the
+same constraint the dev API already has. Availability is not graded, and the handbook names local
+Docker Compose plus Tailscale as a complete demo substitute. Backups are manual — `.ply` files stay
+out of git (`exports/` is gitignored) and anything a report depends on gets copied off this disk.
+
+Revisit only on a real trigger: assets needed with the Legion off, a demo where the tailnet is
+unavailable, or storage outgrowing the disk.
 
 ## GPU track, as installed 2026-08-23 (Legion, RTX 4060 Laptop, 8 GB)
 

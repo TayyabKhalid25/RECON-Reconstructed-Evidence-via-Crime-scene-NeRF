@@ -179,7 +179,7 @@ Each of these changes what you build. None of them should be discovered in Novem
 - [ ] Cloud Anchors verified against live sources, ASA retirement confirmed for the defence answer
 - [x] One version set pinned in the proposal (22 Aug draft), pending: tech stack diagram and Gantt updated to match
 - [ ] Reconstruction framework confirmed by actually installing splatfacto and training once
-- [ ] Asset storage decided, card or tunnel
+- [x] Asset storage decided, card or tunnel (1 Sep: disk plus tunnel, no card. See `docs/STACK.md`)
 - [ ] Android first or iOS first decided
 
 ## Section 04. The pinned stack
