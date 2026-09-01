@@ -20,7 +20,11 @@ that breaks one track in November is a self inflicted wound.
 | COLMAP | 3.x | 3.13.0, conda-forge build `cuda_126h5ca8012_3` | W |
 | Nerfstudio (splatfacto) | current stable | 1.1.5 (gsplat 1.4.0, kernels JIT-built for sm_89) | W |
 | Unity | 6 LTS with URP | 6000.3.22f1 | T |
+| URP | 17.x | 17.3.0 | T |
 | AR Foundation | 6.x | 6.6.1 | T |
+| ARCore / ARKit | 6.5.x | 6.5.0 | T |
+| XR Management | 4.6.x | 4.6.0 | T |
+| Android Build Tools | Unity default | OpenJDK 17, Android SDK 34 | T |
 | Splat renderer | aras-p/UnityGaussianSplatting | Git hash 2c6fed3 (will be embedded and modified for mobile) | T |
 | Physics | PhysX, bundled with Unity | | T |
 
