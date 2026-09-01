@@ -508,6 +508,10 @@ Highest risk track, because it is the one where the desktop research tooling mee
 >
 > Option 3 is a legitimate engineering answer, not a failure, as long as you say clearly what runs where and why. Decide by 9 Oct, see Section 15.
 
+> [!WARNING]
+> **UGS modifications for mobile enablement**
+>
+> The stock `aras-p/UnityGaussianSplatting` (UGS) package relies on Wave Intrinsics (e.g., `wavebasic`, `waveballot`) in its compute shaders for radix sorting. These instructions are unsupported on mobile GPUs like Adreno and Mali, causing the entire shader program to fail compilation. To enable rendering on mobile devices, the UGS codebase must be embedded locally and modified to replace the radix sort with a mobile-compatible approach, such as a Bitonic Merge Sort using global memory.
 ### Ballistics, the bug you will definitely hit
 
 A bullet at even 300 m/s covers 6 metres in a single 20 ms physics step. A standard rigidbody will teleport straight through a wall between steps and report no collision. This will look like your physics is broken when in fact your integration is too coarse.
