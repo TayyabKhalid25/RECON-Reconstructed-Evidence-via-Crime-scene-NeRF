@@ -6,11 +6,11 @@ that breaks one track in November is a self inflicted wound.
 
 | Layer | Pinned | Installed (exact) | Who |
 |---|---|---|---|
-| Node | 20 LTS | | F |
-| Next.js | App Router, current stable | | F |
-| Prisma | 5 | | F |
-| PostgreSQL | 16 | | F |
-| Redis + BullMQ | current stable | | F |
+| Node | 20 LTS | | W |
+| Next.js | App Router, current stable | | W |
+| Prisma | 5 | | W |
+| PostgreSQL | 16 | | W |
+| Redis + BullMQ | current stable | | W |
 | OS (GPU track) | Ubuntu 22.04 under WSL2 | Ubuntu 22.04.5 LTS, WSL2 | W |
 | CUDA toolkit | 12.x | 12.6, nvcc V12.6.85 | W |
 | Python | 3.10 or 3.11, whatever Nerfstudio's docs specify | 3.11.16 (Miniforge env `recon`) | W |
