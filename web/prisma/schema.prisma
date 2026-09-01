@@ -1,0 +1,152 @@
+// Data model from docs/API.md. That file is the contract between the three
+// tracks: a change here that alters a field the GPU worker or Unity client
+// reads needs all three of us to agree first.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  INVESTIGATOR
+  VIEWER
+}
+
+/// Job states from the contract's state machine. One direction only:
+/// PENDING -> PROCESSING -> READY, with FAILED and CANCELLED as exits.
+enum JobStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  CANCELLED
+}
+
+/// Distinguishes the operator's upload from what the worker produced, so
+/// custody can answer "who put this here" per file.
+enum AssetKind {
+  SOURCE_VIDEO
+  SPLAT_PLY
+  METADATA_JSON
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(INVESTIGATOR)
+  createdAt    DateTime  @default(now())
+
+  cases     Case[]
+  auditLogs AuditLog[]
+}
+
+model Case {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // An investigator must not read another investigator's case (D7). RBAC is
+  // enforced in the route handlers; this is the ownership it checks against.
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  scenes Scene[]
+
+  @@index([ownerId])
+}
+
+model Scene {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  caseId String
+  case   Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  /// Contract: "Scene owns one reconstruction job".
+  job Job?
+
+  assets Asset[]
+
+  /// Metres per scene unit, from the marker. Null until the GPU track computes
+  /// it; Unity cannot place the twin at real size without it. See docs/FRAMES.md.
+  unitScale Float?
+
+  @@index([caseId])
+}
+
+model Job {
+  id        String    @id @default(cuid())
+  status    JobStatus @default(PENDING)
+  /// Readable text when status is FAILED. The contract is explicit that a job
+  /// which silently vanishes is the worst case to debug.
+  error     String?
+  progress  Int       @default(0)
+  /// Which machine claimed it. Three CUDA boxes run the same worker from week 3,
+  /// and RESULTS.md rows are only meaningful with the machine recorded.
+  workerName String?
+
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  sceneId String @unique
+  scene   Scene  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model Asset {
+  id        String    @id @default(cuid())
+  kind      AssetKind
+  /// Path relative to ASSET_DIR. Storage is disk plus tunnel (FTW-13), so this
+  /// is a key rather than a URL: the asset route serves bytes from disk today
+  /// and could redirect to object storage without a contract change.
+  storageKey String
+  /// Contract requires sha256 and byte size on every asset. Custody starts on
+  /// day one, so this is written at upload, not backfilled later.
+  sha256    String
+  byteSize  BigInt
+  mimeType  String?
+  createdAt DateTime  @default(now())
+
+  sceneId String
+  scene   Scene  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([sceneId])
+  @@index([sha256])
+}
+
+/// Append only. Each row hashes its own contents plus the previous row's hash,
+/// so tampering with any earlier row breaks every hash after it. Never delete
+/// from this table, and never update a row: the chain is the evidence.
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  /// Millisecond precision on purpose. The row hash covers the ISO-8601
+  /// timestamp, and JS Date only carries milliseconds: at Postgres's default
+  /// microsecond precision a value would not round-trip identically and every
+  /// verification would fail on read-back. Do not widen this.
+  timestamp  DateTime @default(now()) @db.Timestamp(3)
+
+  /// Monotonic position in the chain. Verification walks rows in this order,
+  /// so it must not depend on timestamp ties.
+  seq      Int    @unique @default(autoincrement())
+  prevHash String
+  rowHash  String @unique
+
+  @@index([targetType, targetId])
+  @@index([userId])
+}
