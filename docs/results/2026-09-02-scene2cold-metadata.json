@@ -1,0 +1,39 @@
+{
+  "sceneId": "scn_2cold",
+  "plyFile": "splat_unity.ply",
+  "splatCount": 258157,
+  "sourceFrames": 316,
+  "handedness": "left",
+  "upAxis": "y",
+  "unitScale": 0.312834,
+  "scaleMethod": "marker",
+  "boundingBox": {
+    "min": [
+      -15.099974632263184,
+      -15.281909942626953,
+      -18.924325942993164
+    ],
+    "max": [
+      15.831721305847168,
+      4.558213233947754,
+      13.144667625427246
+    ]
+  },
+  "originHint": [
+    0,
+    0,
+    0
+  ],
+  "metrics": {
+    "psnr": 30.256061553955078,
+    "ssim": 0.9457913637161255,
+    "lpips": 0.11730971932411194
+  },
+  "training": {
+    "iterations": 7000,
+    "minutes": 2.39,
+    "peakVramMb": 1349
+  },
+  "sha256": "62fe0cee7b788759386be0a19781959e7809c6c74d7a6db042b499cf80c1fc06",
+  "createdAt": "2026-09-02T16:12:41Z"
+}

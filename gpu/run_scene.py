@@ -66,6 +66,8 @@ PRESET_DOWNSCALES = 2
 
 MARKER_EDGE_M = 0.17          # docs/FRAMES.md, measured in FTW-25
 
+HEADER_END = b"end_header\n"
+
 
 class Fail(Exception):
     """A gate refused to continue. The message is the reason, for humans."""
@@ -131,10 +133,10 @@ def ply_header_and_count(path):
     """Read a binary PLY's header text and vertex count without loading the body."""
     with open(path, "rb") as f:
         blob = f.read(65536)
-    end = blob.find(b"end_header\n")
+    end = blob.find(HEADER_END)
     if end < 0:
         raise Fail(f"{path}: no end_header in the first 64 KB; not a binary PLY")
-    header = blob[: end + len(b"end_header\n")].decode("latin-1")
+    header = blob[: end + len(HEADER_END)].decode("latin-1")
     count = None
     for line in header.splitlines():
         if line.startswith("element vertex"):
@@ -155,11 +157,37 @@ def sha256_file(path, chunk=1 << 20):
 def bounding_box(ply_path):
     """Axis-aligned bounds in scene units. Imports numpy lazily.
 
-    Reuses tools/decimate_splats.read_ply so there is one PLY reader, not two.
+    Reads positions here rather than importing tools/decimate_splats through a
+    sys.path hack. Sharing that reader was the DRY choice and it cost a real
+    failure: a cold run reached the metadata stage after twelve minutes of
+    COLMAP and training, then died on ModuleNotFoundError because the sibling
+    file was no longer in the working tree. Twenty lines of duplication is a
+    good trade against an eleven-stage pipeline failing at stage ten.
     """
-    sys.path.insert(0, str(TOOLS))
-    from decimate_splats import read_ply
-    _, names, arr = read_ply(str(ply_path))
+    import numpy as np
+
+    with open(ply_path, "rb") as f:
+        raw = f.read()
+    i = raw.find(HEADER_END)
+    if i < 0:
+        raise Fail(f"{ply_path}: not a binary PLY with an end_header")
+    header = raw[: i + len(HEADER_END)].decode("latin-1")
+    names, count = [], None
+    for line in header.splitlines():
+        if line.startswith("element vertex"):
+            count = int(line.split()[-1])
+        elif line.startswith("property"):
+            parts = line.split()
+            if parts[1] != "float":
+                raise Fail(f"{ply_path}: only float properties supported, got {parts[1]}")
+            names.append(parts[-1])
+    if count is None:
+        raise Fail(f"{ply_path}: header has no 'element vertex'")
+
+    body = raw[i + len(HEADER_END):]
+    arr = np.frombuffer(
+        body[: count * len(names) * 4], dtype="<f4"
+    ).reshape(count, len(names))
     cols = [names.index(c) for c in ("x", "y", "z")]
     pts = arr[:, cols]
     return ([float(v) for v in pts.min(axis=0)],
