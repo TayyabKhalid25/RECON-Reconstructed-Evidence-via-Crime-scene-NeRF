@@ -83,6 +83,51 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 |---|---|---|---|---|
 | | | | | |
 
+**Still empty, and it is the most important empty table in this file.** Nothing has yet rendered
+on a phone, so the mobile splat budget remains provisional and FTW-38 stays blocked on the
+measurement. What we do know as of 2026-09-02 is a negative result from Track C (PR #14): the
+stock `aras-p/UnityGaussianSplatting` and the `wuyize25/gsplat-unity` fork both use HLSL wave
+intrinsics (`wavebasic`, `waveballot`) in the `SplatUtilities.compute` radix sort, which fail to
+compile on Mali/Adreno and take the whole shader file down with them. So the FPS figure is
+blocked on a renderer that runs at all, not on a capture.
+
+### Export decimation, measured 2026-09-02 (legion)
+
+`tools/decimate_splats.py` on `exports/1/splat_unity.ply` (scene 1, 178 333 splats, 62 properties).
+Spherical-harmonic truncation is the first lever because it is the only one that costs no geometry.
+
+| Keep | Properties | Size | Shrink | mean dC | p99 dC | max dC | Splats lost |
+|---|---|---|---|---|---|---|---|
+| degree 3 (as exported) | 62 | 44.23 MB | 1.00x | - | - | - | - |
+| degree 2 | 41 | 29.25 MB | 1.51x | 2.4 / 255 | 12.8 / 255 | 68 / 255 | **none** |
+| degree 1 | 26 | 18.55 MB | 2.38x | 3.2 / 255 | 16.4 / 255 | 77 / 255 | **none** |
+| **degree 0** | **17** | **12.13 MB** | **3.65x** | **3.9 / 255** | **19.2 / 255** | **87 / 255** | **none** |
+
+dC is absolute radiance error against full degree-3 SH, evaluated over 400 random view directions
+on a 20 000-splat sample, in sRGB levels out of 255. Regenerate with
+`python tools/decimate_splats.py exports/1/splat_unity.ply --sh-report`.
+
+The 45 `f_rest_*` floats are 72.6 percent of the file and carry a mean absolute coefficient of
+0.014 against the base colour's 0.514. Dropping all of them leaves every splat's position, scale,
+rotation, opacity and base colour **bit-identical** — verified by column comparison, with the
+bounding box unchanged at 9.28 x 7.03 x 8.81 m. **unitScale 0.369573 and every measurement derived
+from it therefore survive SH truncation untouched**, which is what makes this lever safe to pull
+before the accuracy work in FTW-36 is finished.
+
+Read the three columns honestly rather than quoting only the mean. A mean error of 3.9 levels is
+below what a viewer notices across a room, but p99 is 19 levels and the worst splats shift 87. The
+large excursions are specular highlights on glass and gloss, which is where view-dependent colour
+was doing real work. For a forensic scene the geometry is the evidence and the gloss is not, so
+degree 0 is defensible; it should still be stated as a trade, not as a free win.
+
+An opacity **threshold** is not a useful lever on our exports: splatfacto has already pruned at
+`cull-alpha-thresh 0.1`, so only 1.32 percent of scene 1's splats sit below sigmoid opacity 0.1 and
+0.02 percent below 0.01. Cutting splat *count* therefore has to rank by contribution
+(opacity x cross-section), and it costs geometry, so it waits for a device measurement per FTW-38.
+
+For illustration only, not a calibrated budget: degree 0 plus a 100 000-splat cap gives 6.80 MB,
+a 6.50x reduction, dropping 43.9 percent of splats.
+
 ## Scale checks
 
 | Date | Scene | Real measurement | Reconstructed measurement | Error (cm) |
