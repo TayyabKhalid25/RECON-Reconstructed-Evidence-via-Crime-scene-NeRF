@@ -27,6 +27,17 @@ components/upload-dropzone.tsx          client: XHR upload with progress
 lib/api.ts                              typed fetch wrappers, one error shape
 ```
 
+## The scene viewer
+
+Rendering splats in the browser is its own decision, written up in `docs/VIEWER-AND-EDITING.md`. Do not pick a renderer ad hoc — FTW-59 measures Spark against PlayCanvas against GaussianSplats3D on our real 178 k scene, and the winner gets pinned in `docs/STACK.md`.
+
+Two rules the viewer must not get wrong, because both produce confidently incorrect output:
+
+- **Say which asset is on screen.** The viewer loads a lossy delivery format (SOG or SPZ); the archival `.ply` is what `sha256` covers and what measurements come from. A user who measures on a quantised scene and quotes it in a report is a bug we can design out.
+- **Refuse `unitScale == 0.0` loudly**, exactly as the Unity client does. A non-metric scene must not be silently navigable as though it were metric. See `docs/FRAMES.md`.
+
+No anchoring is involved anywhere in the web viewer — there is no physical room to align to.
+
 ## Demo-day gotchas
 
 | Symptom | Cause |

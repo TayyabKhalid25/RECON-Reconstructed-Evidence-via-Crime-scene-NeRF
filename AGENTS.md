@@ -5,7 +5,8 @@ Unity AR with a physics overlay. Three tracks: `gpu/` (Wahaj), `web/` (Wahaj), `
 (Tayyab leads, Faizan second; Faizan also keeps second-hand duties on `gpu/`). Read
 `docs/Forensic-NeRF-FYP-Handbook.md` before doing anything substantial; it is the
 single source of truth for the plan, and `docs/API.md` is the contract the three tracks build
-against. Project skills for common situations (reconstruction runs, contract changes, frame
+against. `docs/README.md` indexes every document, says which one owns what, and lists the
+decisions that are already settled — check it before re-deriving one. Project skills for common situations (reconstruction runs, contract changes, frame
 bugs, PRs, graded deliverables) are indexed in `SKILLS.md`; when one matches the task at hand,
 follow it.
 
@@ -86,6 +87,17 @@ stuff" is worse than no entry.
 - `docs/API.md` is a contract. Changing it requires all three team members to know first.
 - The frame convention in `docs/FRAMES.md` is fixed: convert once, GPU side, before export.
   Never add a coordinate flip on the Unity side.
+- **Annotation never modifies splat geometry.** POIs, markers and measurements are database
+  rows; there must be no code path from them to a splat asset, and a test enforces it. Cropping
+  and cleanup *do* modify evidence, so they happen before the asset is hashed and they get
+  logged. The three operations people call "editing" are separated in
+  `docs/VIEWER-AND-EDITING.md`; do not let them share a path.
+- **A client never computes a custody chain hash.** The chain is append-only and server-ordered.
+  Offline edits are a journal of intents that the server replays, orders and hashes. See
+  `docs/VIEWER-AND-EDITING.md`.
+- Anchoring is settled in `docs/ANCHORING.md`: the marker aligns and gives scale, the cloud
+  anchor only persists that alignment, and there is one anchor per scene at the marker origin.
+  Remote and web viewing need no anchor at all.
 - Record exact installed versions in `docs/STACK.md` the day you install them. No silent
   upgrades mid semester.
 - Numbers land in `docs/RESULTS.md` the day they are produced, with date and machine.

@@ -31,6 +31,24 @@ await tx.auditLog.create({ data: { ...row, prevHash, rowHash: rowHash({ ...row, 
 - **Verify endpoint**: walk in insert order, recompute each hash, compare. Return the first bad row index. The unit test that matters: verify passes, then `UPDATE` one old row directly in the DB, verify now fails at exactly that row.
 - Timestamps are stored as the exact string that was hashed. Reformatting on read is the classic false-alarm source.
 
+### Offline edits: the client never computes a chain hash
+
+The chain is inherently sequential and server-ordered, so a device with no network cannot extend it — it does not know what `prev` will be by the time it reconnects, and two offline devices would both claim the same position. **Do not let clients chain to "support offline".** A chain that cannot be verified is worse than no chain: it is a tamper-evidence claim that does not hold.
+
+The design instead (full version in `docs/VIEWER-AND-EDITING.md`): the client keeps a journal of *intents* with client-generated UUIDs as the entity ids; on sync the server validates, applies them in receipt order, stamps **its own** clock, and appends the audit rows itself. The client's timestamp is kept as a `claimed` field, clearly labelled, never as the custody time. Intents carry a UUID and the server records applied ids, so a retried sync after a timeout does not double-apply. Unsynced edits render as **draft** and cannot be exported.
+
+The honest limitation, which belongs in the report rather than hidden: there is a window during which the log does not yet cover those edits.
+
+## What the chain must cover, and what must not touch assets
+
+Three operations get called "editing" and they get different treatment. Mixing them is how the custody story quietly stops being true:
+
+- **Cleanup** (cropping floaters, trimming the scene box) **modifies evidence.** It happens pre-ingest, before the asset is hashed and sealed, the uncropped original is retained, and the crop gets an audit row referencing both hashes. Never mutate an asset that already has a `sha256` recorded — a new version is a new Asset row.
+- **Segmentation** into per-object parts is **additive**: new files alongside the original, whose hash stays valid.
+- **Annotation** (POIs, markers, notes, measurements) is database rows only. **It must be incapable of modifying splat geometry** — no code path from an annotation route to an asset, enforced by a test rather than a comment. That is the answer to "how do you know the investigator didn't move the body".
+
+Anchoring is audited too: hosting or resolving asserts where in the physical world evidence sits, which is exactly the class of claim this log exists to make accountable. See `docs/ANCHORING.md`.
+
 ## Upload integrity
 
 SHA-256 the video **while streaming it to disk** at upload (hash the same bytes you store), record it on the Asset row and in the first audit entry for the case. The GPU worker re-hashes after download and refuses a mismatch. Same for the produced `.ply` on the way back.

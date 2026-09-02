@@ -33,6 +33,13 @@ ARTrackedImageManager (marker library, physicalSize set from the printed measure
 - The splat scene parents under the marker-derived pose. Cloud Anchors then persist that pose for multi-device (host once, store anchor id via `POST /api/scenes/:id/anchor`, resolve on the second device).
 - Never scale or flip the splat renderer to "fix" appearance; that is a metadata bug, see debugging-frames-and-scale.
 
+**`docs/ANCHORING.md` is the full design and it is settled** — read it before writing anchor code. The four things most likely to cost you a day:
+
+- **Which package is still open.** AR Foundation 6.5 has a built-in persistent anchor API backed by Cloud Anchors (no extra package), but Unity documents its `SerializableGuid` as non-transferable and lists ARCore as N/A for "shared anchors". `arcore-unity-extensions` v1.54.0 (`arf6`) is the documented two-device route but predates AR Foundation 6.5. FTW-50 decides; do not build on either first.
+- **Keyless authorization is mandatory**, not preferred: an API key caps anchor lifetime at 24 hours against a 1-365 day range. And the SHA-1 is per keystore, so three debug keystores means `ErrorNotAuthorized` on two phones — which looks exactly like a broken anchor. One shared keystore.
+- **Gate hosting on `FeatureMapQuality == Good`.** Hosting on `Insufficient` returns an id that never resolves, and the failure surfaces days later on a different phone.
+- **One anchor per scene, at the marker origin, never one per POI or object part.** Then the stored anchor-to-scene transform is identity, and `scale: 1` there is *not* `metadata.unitScale` — confusing the two is the double-scale bug.
+
 ## Mobile frame rate
 
 - **Measure first**: sample scene on the real phone, read FPS from a on-screen counter, week 1. This number sets the training splat budget (the phone, not the 8 GB GPU, is the ceiling).
