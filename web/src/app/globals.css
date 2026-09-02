@@ -1,26 +1,183 @@
 @import "tailwindcss";
 
+/*
+ * RECON dashboard theme.
+ *
+ * Deliberately dark navy and near-black with a cyan readout, angular rather
+ * than rounded, monospace for anything that is data. The reference is a
+ * detective-mode HUD, which suits a forensic evidence tool: the panel should
+ * read "instrument", not "web app". Every colour is a token here so a demo on a
+ * projector can be adjusted in one place.
+ *
+ * Light mode is deliberately not implemented. This is a single-purpose
+ * instrument shown in dark rooms, and a half-done light theme looks worse than
+ * none. `color-scheme: dark` stops the browser painting white form controls.
+ */
+
+@theme {
+  /* Surfaces, darkest to lightest */
+  --color-void: #04070d;
+  --color-abyss: #070c16;
+  --color-panel: #0b1220;
+  --color-panel-raised: #101b2d;
+  --color-panel-hover: #14243a;
+
+  /* Structure */
+  --color-edge: #1b2b43;
+  --color-edge-bright: #35527a;
+  --color-edge-glow: #1e3a5f;
+
+  /* The readout. Cyan is the primary accent, used sparingly so it stays loud */
+  --color-signal: #22d3ee;
+  --color-signal-dim: #0e7490;
+  --color-signal-glow: #67e8f9;
+
+  /* Type */
+  --color-ink: #dbe7f5;
+  --color-ink-soft: #8fa6c0;
+  --color-ink-faint: #5b7391;
+
+  /* State. Mapped to the five job states in docs/API.md */
+  --color-pending: #64748b;
+  --color-processing: #38bdf8;
+  --color-ready: #34d399;
+  --color-failed: #f87171;
+  --color-cancelled: #52525b;
+  --color-warn: #fbbf24;
+
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /*
+   * Two fixed layers: a faint blueprint grid and a vignette. Fixed rather than
+   * scrolling so long pages do not shimmer, and low contrast so it never
+   * competes with data.
+   */
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #0d1b2e 0%, transparent 60%),
+    linear-gradient(var(--color-edge) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-edge) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+  background-position: center top, center, center;
+  min-height: 100vh;
+}
+
+/* Grid lines are too strong at full strength; fade them without a wrapper div. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-void);
+  opacity: 0.82;
+  z-index: -1;
+}
+
+/*
+ * Angular corners. A 10px notch on two opposite corners reads as machined
+ * rather than decorative, and costs nothing to render.
+ */
+@utility notch {
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+}
+
+@utility notch-sm {
+  clip-path: polygon(
+    6px 0,
+    100% 0,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    0 100%,
+    0 6px
+  );
+}
+
+/* A hairline that glows, for the active element only. */
+@utility ring-signal {
+  box-shadow:
+    0 0 0 1px var(--color-signal-dim),
+    0 0 18px -6px var(--color-signal);
+}
+
+/* Section labels: small, wide, uppercase, the way instrument panels label things. */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+/* Scanline sweep for in-progress work. Respects reduced motion. */
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@utility sweep {
+  animation: sweep 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Scrollbars, so they do not punch a light hole in a dark UI. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge-glow) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-edge-glow);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: var(--color-signal-dim);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 1px solid var(--color-signal);
+  outline-offset: 2px;
 }
