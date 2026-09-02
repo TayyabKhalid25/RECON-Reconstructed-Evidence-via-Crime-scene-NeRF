@@ -76,6 +76,58 @@ out of git (`exports/` is gitignored) and anything a report depends on gets copi
 Revisit only on a real trigger: assets needed with the Legion off, a demo where the tailnet is
 unavailable, or storage outgrowing the disk.
 
+## Encryption at rest, implemented 2026-09-02
+
+Handbook Section 08 asks us to say **which** of the three things called "encryption at rest" we
+did, and to state plainly where the key lives and what an attacker with only database access can
+read. This is that statement, and the report should reuse it rather than paraphrasing.
+
+**What was implemented: option 3, application level envelope encryption.** Asset bytes are
+encrypted with AES-256-GCM before they are ever written to disk. The key lives in
+`ASSET_ENCRYPTION_KEY` in `.env`, outside the database. The 96-bit IV and the 128-bit auth tag are
+stored alongside the ciphertext in the file itself.
+
+On-disk layout, `web/src/lib/encryption.ts`:
+
+```
+MAGIC(8) | IV(12) | TAG(16) | ciphertext
+"RECONAG1"
+```
+
+The magic prefix is what makes the rollout reversible in both directions: a reader can tell an
+encrypted file from a plaintext one, so encryption can be switched on for a deployment that already
+has assets on disk with no migration, no schema change, and no field in `docs/API.md`.
+
+### What an attacker actually gets
+
+| Attacker has | Can read | Cannot read |
+|---|---|---|
+| Database only | Metadata: filenames, plaintext sizes, SHA-256 of plaintext, case/scene structure, the whole audit chain | **No byte of any video or reconstruction** |
+| Filesystem only | Ciphertext, and file sizes | Nothing useful without the key |
+| Database **and** the key | Everything | — |
+| Provider disk encryption alone | (this is option 1, which we did *not* rely on) | — |
+
+The SHA-256 in the custody record is of the **plaintext** the investigator uploaded, so custody
+verification is unaffected by whether encryption is on. `Asset.byteSize` is likewise the plaintext
+length; the file on disk is 36 bytes larger.
+
+### Limitations, stated rather than buried
+
+- **Streaming decryption emits plaintext before the auth tag is checked.** GCM authenticates the
+  whole ciphertext but a streamed decrypt only discovers a bad tag at the end, so a tampered 44 MB
+  `.ply` is partly written to the response before the stream errors. We stream anyway, because
+  buffering 44 MB per request to serve a phone over the tunnel is worse. Detection is not weakened,
+  only moved: the asset route sends `X-Asset-SHA256` from the custody record and both the GPU worker
+  and the Unity client re-hash what they received.
+- **One key per environment, and rotation is future work.** There is no key hierarchy and no HSM,
+  and the report should say so plainly rather than implying otherwise.
+- **Sensitive columns are not yet encrypted.** Section 08 asks for option 2 alongside option 3;
+  only the asset half is done. Nothing in the current schema is more sensitive than a case title,
+  but that is a reason to scope the claim, not to claim both.
+- **Off by default in code.** An existing checkout keeps working; `.env.example` ships `on`, so a
+  fresh setup gets it. A missing or malformed key throws rather than silently writing plaintext,
+  because "encryption was enabled and quietly did nothing" is the worst available outcome.
+
 ## GPU track, as installed 2026-08-23 (Legion, RTX 4060 Laptop, 8 GB)
 
 - Toolkit installed as `cuda-toolkit-12-6` from NVIDIA's `wsl-ubuntu` repo. Never the `cuda` or
