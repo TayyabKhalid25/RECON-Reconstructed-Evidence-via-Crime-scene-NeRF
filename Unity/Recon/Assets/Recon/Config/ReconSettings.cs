@@ -16,6 +16,12 @@ namespace Recon.Config
         [Tooltip("Base URL of the RECON web app over the tailnet. The dev API runs on the Legion (docs/NETWORK.md).")]
         public string apiBaseUrl = "http://legion:3000";
 
+        [Tooltip("Seconds before a JSON call gives up. Asset downloads ignore this: a 45 MB .ply over a home uplink outlives any sane timeout, so they run untimed with a progress bar instead. (FTW-70)")]
+        [Min(1)] public int apiTimeoutSeconds = 30;
+
+        [Tooltip("Folder under persistentDataPath that FileSceneSource lists and SceneLoader caches downloads into, as <folder>/<sceneId>/. Keeps Unity working before the web DB exists. (FTW-70)")]
+        public string sceneCacheFolder = "scenes";
+
         [Header("Marker (docs/FRAMES.md)")]
         [Tooltip("Measured outer edge of the printed marker in metres. 0.170 as measured 2026-08-23. Leaving physicalSize unset makes ARCore estimate it and the scale drifts.")]
         public float markerPhysicalSizeMetres = 0.170f;
