@@ -8,9 +8,9 @@ that breaks one track in November is a self inflicted wound.
 |---|---|---|---|
 | Node | 22 LTS (was 20 LTS, see note) | v22.23.2 | W |
 | Next.js | App Router, current stable | 16.3.4 (React 19.2.8) | W |
-| Prisma | 5 | | W |
-| PostgreSQL | 16 | | W |
-| Redis + BullMQ | current stable | | W |
+| Prisma | 5 | 5.22.0 (`prisma` + `@prisma/client`) | W |
+| PostgreSQL | 16 | 16, `postgres:16` image via `web/docker-compose.yml` | W |
+| Redis + BullMQ | current stable | Redis 7 (`redis:7-alpine`), BullMQ 6.3.4, ioredis 6.0.0 | W |
 | Asset storage | disk + Tailscale tunnel, no object storage | `ASSET_STORAGE=disk`, decided 2026-09-01 | W |
 | OS (GPU track) | Ubuntu 22.04 under WSL2 | Ubuntu 22.04.5 LTS, WSL2 | W |
 | CUDA toolkit | 12.x | 12.6, nvcc V12.6.85 | W |
