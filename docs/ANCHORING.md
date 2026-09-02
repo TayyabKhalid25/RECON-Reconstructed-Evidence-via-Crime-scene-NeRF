@@ -67,19 +67,23 @@ of work on a feature nobody in the demo path uses.
 | On site AR, marker removed, days later | **Yes** | This is the only way back to the same origin. A released crime scene does not keep our A4 target on the floor |
 | Two investigators, same room, same time | **Yes** | The second device resolves the anchor the first one hosted. This is D12, 01 Nov |
 | Evidence markers, POIs, trajectories, spatter | **No** | They are children of `SceneRoot` and live in scene coordinates in our database |
+| Segmented object parts (the table as its own splat) | **No** | Parts share the scene's origin by construction. See `docs/VIEWER-AND-EDITING.md` |
 | Long AR session, tracking has drifted | Optional | Re-detecting the marker is cheaper and more accurate. A resolve also works if the marker is gone |
 
 ### One anchor per scene, hosted at the marker origin
 
 The tempting mistake is to host a cloud anchor per evidence marker so each one "sticks" to the
-real world. Do not. Reasons, in order of how much they cost to discover late:
+real world. Do not, and the same goes for segmented object parts. Reasons, in order of how much
+they cost to discover late:
 
 1. **The twin has exactly one origin.** POIs are already positioned relative to it. Anchoring
    them individually introduces N independent re-localisation errors where there was one, and
    they will disagree with each other and with the splat.
 2. **Custody.** A POI position is a row in our database, inside the hash chain, in scene
    coordinates we can verify. A cloud anchor id is an opaque handle to state on Google's
-   servers that we cannot verify, cannot re-derive and cannot include in the chain.
+   servers that we cannot verify, cannot re-derive and cannot include in the chain. (POIs
+   edited offline enter the chain **on sync**, in server order, with the server computing the
+   hashes — see `docs/VIEWER-AND-EDITING.md`. A client never computes a chain hash.)
 3. **Quota and expiry.** One anchor per scene means one host call per scene, against a limit of
    30 per minute, and one TTL to keep track of. One per POI means the twin can partially
    expire, which is a genuinely horrible bug to diagnose on a phone.
