@@ -465,10 +465,10 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 
 #### Track B milestones
 
-- [ ] Schema migrated, seed script for a test user and case
+- [x] Schema migrated, seed script for a test user and case — first migration applied 2026-09-02, `prisma/migrations/20260902163105_init`
 - [x] Upload, hash, enqueue working end to end
 - [ ] Real GPU worker driving a job to READY
-- [ ] Dashboard with live status and asset download
+- [x] Dashboard with live status and asset download — cases, upload with progress, scene detail, custody view; SWR polling stops on a terminal state
 - [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
 - [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
 - [ ] AES-256-GCM asset encryption, with the key outside the DB

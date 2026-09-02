@@ -72,12 +72,19 @@ export type SceneDetail = {
   assetUrl: string
 }
 
-export type CustodyReport = {
-  ok: boolean
-  rows: number
-  firstBadSeq?: number | null
-  message?: string
-}
+/**
+ * Mirrors VerifyResult in src/lib/custody.ts, which cannot be imported here:
+ * that module pulls in Prisma and is server-only. If the server type changes,
+ * this must change with it — typecheck will not catch the drift.
+ */
+export type CustodyReport =
+  | { ok: true; rows: number }
+  | {
+      ok: false
+      rows: number
+      failedAtSeq: number
+      reason: 'hash-mismatch' | 'chain-break' | 'sequence-gap'
+    }
 
 /** Carries the API's own error code so callers can branch without string matching. */
 export class ApiError extends Error {

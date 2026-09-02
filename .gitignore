@@ -289,3 +289,6 @@ marker-*.png
 
 # training exports (metadata.json is recorded under docs/results/ instead)
 exports/
+
+# Agent worktrees: scratch checkouts, never source.
+.claude/worktrees/

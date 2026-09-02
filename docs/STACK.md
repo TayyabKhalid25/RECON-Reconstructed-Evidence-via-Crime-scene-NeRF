@@ -11,6 +11,7 @@ that breaks one track in November is a self inflicted wound.
 | Prisma | 5 | | W |
 | PostgreSQL | 16 | | W |
 | Redis + BullMQ | current stable | | W |
+| Dashboard data layer | SWR | 2.5.1, added 2026-09-02 (see note below) | W |
 | Asset storage | disk + Tailscale tunnel, no object storage | `ASSET_STORAGE=disk`, decided 2026-09-01 | W |
 | OS (GPU track) | Ubuntu 22.04 under WSL2 | Ubuntu 22.04.5 LTS, WSL2 | W |
 | CUDA toolkit | 12.x | 12.6, nvcc V12.6.85 | W |
@@ -28,6 +29,24 @@ that breaks one track in November is a self inflicted wound.
 
 Rule for the GPU track: no bleeding edge Python. Torch and CUDA wheels lag new Python releases
 by months. Use the version the reconstruction toolchain's own install docs specify.
+
+## SWR, added 2026-09-02
+
+The dashboard was first written with hand-rolled `useEffect` fetching and no new dependency, on the
+grounds that this repo does not add packages casually. That did not survive the toolchain:
+`react-hooks/set-state-in-effect` — part of React Compiler's rule set, on by default in
+`eslint-config-next` 16 — rejects `setState` reachable from an effect body, `await` or no `await`,
+and points at "You Might Not Need an Effect". The rule is right (cascading renders on every fetch)
+and the accepted answer is a data layer, which is what the `building-dashboard-ui` skill
+recommended in the first place.
+
+**SWR 2.5.1. One dependency, not the five shadcn/ui would have brought.** UI primitives stay
+hand-rolled in `web/src/components/ui.tsx`, because the angular dark-blue look is not shadcn's
+default and most of the library would have been fought rather than used.
+
+It also gets the polling policy right: `refreshInterval` is a function of the last response, so a
+job reaching READY or FAILED stops polling by itself, and SWR pauses while the tab is hidden. Both
+matter against a free-tier database.
 
 ## Asset storage, decided 2026-09-01 (handbook Decision 4, FTW-13)
 
