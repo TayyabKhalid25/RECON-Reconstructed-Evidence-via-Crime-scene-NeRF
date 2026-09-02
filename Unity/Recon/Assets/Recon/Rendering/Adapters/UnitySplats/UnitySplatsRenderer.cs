@@ -91,7 +91,7 @@ namespace Recon.Rendering.UnitySplats
             m_renderer.GammaToLinear = gammaToLinear;
             if (sortEveryNFrames > 1)
             {
-                m_renderer.SortMode = GsplatSortMode.SortEveryNFrames;
+                m_renderer.SortMode = GsplatRenderer.GsplatSortMode.SortEveryNFrames;
                 m_renderer.SortRefreshRate = sortEveryNFrames;
             }
             m_renderer.GsplatAsset = m_asset;
