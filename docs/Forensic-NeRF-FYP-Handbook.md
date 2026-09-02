@@ -203,7 +203,7 @@ Fill the right column in once, on day one, with the exact versions you install. 
 | [T] C | Editor | Unity 6 LTS, pin the exact patch `verify` | ___ |
 | [T] C | Pipeline | URP | ___ |
 | [T] C | AR | AR Foundation 6.x plus ARKit and ARCore provider packages | ___ |
-| [T] C | Splat renderer | aras-p UnityGaussianSplatting, MIT `verify` | ___ |
+| [T] C | Splat renderer | aras-p UnityGaussianSplatting, MIT. **Verified 2026-09-02: MIT yes, but upstream does not support mobile** and will not; see `MOBILE-SPLAT-OPTIONS.md` | ___ |
 | [T] C | Anchors | Per Decision 1 | ___ |
 | [T] C | Physics | PhysX, bundled with Unity | ___ |
 
@@ -496,7 +496,13 @@ Highest risk track, because it is the one where the desktop research tooling mee
 >
 > Splat renderers lean on compute shaders and per frame sorting, and mobile GPUs vary wildly in how well they cope. Assume you will need to cut splat counts hard. Ladder of fallbacks, in the order you should try them:
 >
-> 1. Decimate aggressively, prune low opacity splats, and cap count to whatever holds 30 fps on your actual test phone.
+> 1. Decimate aggressively and cap count to whatever holds 30 fps on your actual test phone.
+>    **Measured correction, 2026-09-02: "prune low opacity splats" does not work on our exports.**
+>    splatfacto already prunes at `cull-alpha-thresh 0.1`, so only 1.32 % of scene 1's splats sit
+>    below that and an opacity threshold removes almost nothing. Two levers that do work:
+>    truncating spherical harmonics (3.65x smaller, **no geometry change at all**, so accuracy
+>    figures are untouched), then capping count ranked by opacity x cross-section. Numbers in
+>    `RESULTS.md`, tool is `tools/decimate_splats.py`.
 > 2. Distance based level of detail, so only nearby splats are drawn at full density.
 > 3. **Ship a textured mesh on mobile** instead of splats. Poisson reconstruct from splat centres, bake colour to texture, and keep true splat rendering for the web dashboard preview where a desktop GPU is available. Your proposal already needs that mesh for colliders, so this is a reuse, not new work.
 >
