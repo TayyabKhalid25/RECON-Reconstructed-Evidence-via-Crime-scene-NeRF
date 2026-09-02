@@ -75,6 +75,24 @@ Test Runner window or headless with `Unity/run-tests.ps1`. `Unity/build-android.
 `.ply` + `metadata.json` to the phone for the FTW-30 measurement. These arrive with FTW-69; until
 that merges the commands above do not exist yet.
 
+## Gotchas learned the hard way
+
+- **An interrupted Android build leaves the tree dirty.** AR Foundation moves the XR Simulation
+  assets to `Assets/XR/Temp` and the performance-test package writes `Assets/Resources/*.json`
+  during a build, restoring them afterwards. Kill the build mid-way and they stay moved. Always
+  `git status` before committing after a build; `git checkout --` the touched settings and delete
+  `Assets/XR/Temp` and `Assets/Resources` if the build did not finish.
+- **ARCore refuses a reference image without a texture at build time**
+  (`ArCoreImg.MissingTextureException`). `SceneBootstrap` therefore only creates the marker entry
+  when `Assets/Recon/Markers/recon-marker-170mm.png` exists. To score a marker image the way the
+  build does: `Library/PackageCache/com.unity.xr.arcore@*/Tools~/Windows/arcoreimg.exe eval-img
+  --input_image_path=<png>` (ours scores 100; ARCore wants 75 or better).
+- **`Assets/Gsplat/Settings/Resources/GsplatSettings.asset` is required at runtime** by the
+  UnitySplats renderer and is created by the package's own editor bootstrap on first import. It
+  is committed; do not delete it.
+- **Deep worktree paths break on Windows.** The template's asset paths exceed MAX_PATH under a
+  long root. `git config --global core.longpaths true` and a short root such as `%TEMP%w\<name>`.
+
 ## Never commit
 
 `Library/`, `Builds/`, `.ply`/`.splat` files, splat `.bytes` data, videos. `.gitignore` enforces
