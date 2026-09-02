@@ -136,22 +136,26 @@ namespace Recon.Editor
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(MarkerTexturePath);
             bool hasEntry = false;
             for (int i = 0; i < lib.count; i++) if (lib[i].name == s.markerReferenceName) hasEntry = true;
-            if (!hasEntry)
+            // ARCore's build processor fails the whole build on an entry without a texture
+            // (ArCoreImg.MissingTextureException), so an entry is only ever created with one.
+            if (texture == null)
+            {
+                Debug.LogWarning($"[Recon] No marker texture at {MarkerTexturePath}; no reference image entry created (ARCore refuses textureless entries at build time). FTW-72 supplies the PNG.");
+            }
+            else if (!hasEntry)
             {
                 lib.Add();
                 int idx = lib.count - 1;
                 lib.SetName(idx, s.markerReferenceName);
                 lib.SetSpecifySize(idx, true);
                 lib.SetSize(idx, new Vector2(s.markerPhysicalSizeMetres, s.markerPhysicalSizeMetres));
-                if (texture != null) lib.SetTexture(idx, texture, true);
+                lib.SetTexture(idx, texture, true);
             }
-            else if (texture != null)
+            else
             {
                 for (int i = 0; i < lib.count; i++)
                     if (lib[i].name == s.markerReferenceName && lib[i].texture == null) lib.SetTexture(i, texture, true);
             }
-            if (texture == null)
-                Debug.LogWarning($"[Recon] No marker texture at {MarkerTexturePath}; the reference library entry has no image until FTW-72 lands. ARCore needs a raster PNG, not the SVG.");
             EditorUtility.SetDirty(lib);
             return lib;
         }
