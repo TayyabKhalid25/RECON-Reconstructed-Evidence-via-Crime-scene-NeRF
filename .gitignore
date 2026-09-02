@@ -14,8 +14,14 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Root-anchored on purpose. These come from GitHub's Python template, where they
+# mean the project root's build output. Unanchored, `lib/` matches a `lib`
+# directory at ANY depth -- which silently swallowed the whole of
+# `web/src/lib/`, so every module the API routes import was ignored and never
+# committed. Nothing noticed because CI ran only lint, never a typecheck or a
+# build. Do not remove the leading slash.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
