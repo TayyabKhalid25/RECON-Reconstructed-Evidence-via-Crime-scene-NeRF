@@ -289,3 +289,8 @@ marker-*.png
 
 # training exports (metadata.json is recorded under docs/results/ instead)
 exports/
+
+# Pipeline resume state (gpu/run_scene.py). Machine-specific paths and transient
+# by nature -- the measurements themselves go to docs/RESULTS.md and the
+# committed docs/results/*.json artifacts, not here.
+docs/results/*-run-state.json
