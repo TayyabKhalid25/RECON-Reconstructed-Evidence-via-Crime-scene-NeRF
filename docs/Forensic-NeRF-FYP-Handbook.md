@@ -176,9 +176,9 @@ Each of these changes what you build. None of them should be discovered in Novem
 - [x] Advisor confirmed and named in the proposal (Mr. Saifullah Tanvir, 22 Aug draft)
 - [ ] Development versus R&D classification confirmed with the supervisor
 - [ ] Official proposal template obtained and content moved into it
-- [ ] Cloud Anchors verified against live sources, ASA retirement confirmed for the defence answer
+- [x] Cloud Anchors verified against live sources, ASA retirement confirmed for the defence answer — FTW-11, closed 2026-08
 - [x] One version set pinned in the proposal (22 Aug draft), pending: tech stack diagram and Gantt updated to match
-- [ ] Reconstruction framework confirmed by actually installing splatfacto and training once
+- [x] Reconstruction framework confirmed by actually installing splatfacto and training once — splatfacto 1.1.5, scene 1 trained 2026-08-26; `STACK.md`, `RESULTS.md`
 - [x] Asset storage decided, card or tunnel (1 Sep: disk plus tunnel, no card. See `docs/STACK.md`)
 - [ ] Android first or iOS first decided
 
@@ -217,12 +217,12 @@ Goal by end of 30 Aug: all three tracks scaffolded, all three machines able to t
 
 Redis and Postgres need to be reachable from three different networks, so host them centrally and have every machine connect outward. No port forwarding, no static IPs.
 
-- [ ] Create a private GitHub repo, add all three as collaborators
-- [ ] Monorepo layout: `/gpu`, `/web`, `/unity`, `/docs`, plus `STACK.md` and a strict `.gitignore`
-- [ ] Managed Postgres free tier, connection string shared privately
-- [ ] Managed Redis free tier, connection string shared privately
-- [ ] Tailscale on all three laptops, both MacBooks, and the AR test phones. Free tier covers you and this is how the phone reaches a dev API
-- [ ] A shared `.env.example` committed, real `.env` never committed
+- [x] Create a private GitHub repo, add all three as collaborators
+- [x] Monorepo layout: `/gpu`, `/web`, `/unity`, `/docs`, plus `STACK.md` and a strict `.gitignore` — note the directory is `/Unity`, capitalised
+- [ ] Managed Postgres free tier, connection string shared privately — **superseded by Decision 4 (FTW-13)**: local Docker Compose, no managed tier
+- [ ] Managed Redis free tier, connection string shared privately — **superseded** the same way; Redis 7 runs in `web/docker-compose.yml`
+- [ ] Tailscale on all three laptops, both MacBooks, and the AR test phones. Free tier covers you and this is how the phone reaches a dev API — partial: Wahaj and Tayyab done (FTW-5, FTW-6, FTW-8); Faizan outstanding (FTW-7, FTW-29)
+- [x] A shared `.env.example` committed, real `.env` never committed — verified: `.env` is untracked
 
 > [!NOTE]
 > **Free tier notes**
@@ -233,18 +233,18 @@ Redis and Postgres need to be reachable from three different networks, so host t
 
 On the Legion, in this order. Do not skip ahead, each step tells you whether the previous one actually worked.
 
-- [ ] Install WSL2 with Ubuntu 22.04 from Windows
-- [ ] Update the Windows NVIDIA driver. Do not install a Linux GPU driver inside WSL, the Windows driver provides the GPU
-- [ ] Run `nvidia-smi` inside WSL and see the 4060 listed. If not, stop and fix this before anything else
-- [ ] Install the CUDA toolkit for WSL Ubuntu from NVIDIA's repo, then confirm `nvcc --version`
-- [ ] Install Miniforge, create a clean env on the Python version your framework specifies
-- [ ] Install torch built for your CUDA version, then confirm `torch.cuda.is_available()` is True
-- [ ] Install COLMAP. Confirm it runs and reports whether CUDA is enabled
-- [ ] Install the splat training framework, let its CUDA extensions compile, fix errors now not later
-- [ ] Shoot a 60 second test video of a desk or a corner of a room
-- [ ] Extract frames and run SfM. Success looks like a sparse point cloud plus per frame camera poses
-- [ ] Train a splat scene at reduced resolution. Note peak VRAM, wall clock time, and final metrics
-- [ ] Export a `.ply`, note its file size and splat count, hand it to Tayyab
+- [x] Install WSL2 with Ubuntu 22.04 from Windows — Ubuntu 22.04.5 LTS
+- [x] Update the Windows NVIDIA driver. Do not install a Linux GPU driver inside WSL, the Windows driver provides the GPU — `STACK.md` records why the `cuda` metapackage was avoided
+- [x] Run `nvidia-smi` inside WSL and see the 4060 listed. If not, stop and fix this before anything else
+- [x] Install the CUDA toolkit for WSL Ubuntu from NVIDIA's repo, then confirm `nvcc --version` — 12.6, nvcc V12.6.85
+- [x] Install Miniforge, create a clean env on the Python version your framework specifies — env `recon`, Python 3.11.16
+- [x] Install torch built for your CUDA version, then confirm `torch.cuda.is_available()` is True — 2.7.1+cu126, verified on device
+- [x] Install COLMAP. Confirm it runs and reports whether CUDA is enabled — 3.13.0 conda-forge CUDA build
+- [x] Install the splat training framework, let its CUDA extensions compile, fix errors now not later — gsplat kernels JIT-built for sm_89
+- [x] Shoot a 60 second test video of a desk or a corner of a room — two captures, scenes 1 and 2
+- [x] Extract frames and run SfM. Success looks like a sparse point cloud plus per frame camera poses — 304/304 and 316/316 frames registered
+- [x] Train a splat scene at reduced resolution. Note peak VRAM, wall clock time, and final metrics — `RESULTS.md`: peak 1197 MiB, 2 min 17 s, PSNR 31.37
+- [x] Export a `.ply`, note its file size and splat count, hand it to Tayyab — 43 MB, 178 333 splats, moved over Taildrop
 
 > [!WARNING]
 > **Two WSL traps**
@@ -255,13 +255,13 @@ On the Legion, in this order. Do not skip ahead, each step tells you whether the
 
 ### Track B first light [W]
 
-- [ ] Scaffold the Next.js app with TypeScript and the App Router in `/web`
-- [ ] Docker Compose with Postgres and Redis for local work, so you are not dependent on the cloud tier while iterating
-- [ ] Prisma schema from Section 06, then run the first migration
-- [ ] Implement the three job endpoints, even if nothing consumes them yet
-- [ ] Implement video upload to wherever Decision 4 landed
-- [ ] Enqueue a job on upload, and write a throwaway worker that just flips status, to prove the queue works
-- [ ] Compute SHA-256 of the upload and store it. Custody starts on day one, it is not a November feature
+- [x] Scaffold the Next.js app with TypeScript and the App Router in `/web` — Next.js 16.3.4
+- [x] Docker Compose with Postgres and Redis for local work, so you are not dependent on the cloud tier while iterating — `postgres:16`, `redis:7-alpine`
+- [ ] Prisma schema from Section 06, then run the first migration — schema done; **the first migration has never been run** and there is no `prisma/migrations/`
+- [x] Implement the three job endpoints, even if nothing consumes them yet — plus `/api/jobs/:id/result`
+- [x] Implement video upload to wherever Decision 4 landed — `POST /api/uploads`, disk storage
+- [x] Enqueue a job on upload, and write a throwaway worker that just flips status, to prove the queue works — `web/scripts/throwaway-worker.ts`
+- [x] Compute SHA-256 of the upload and store it. Custody starts on day one, it is not a November feature
 
 ### Track C first light [T]
 
@@ -364,9 +364,9 @@ Unity cannot place a scene correctly without this. Every field here exists becau
 #### Contract sign off [ALL]
 
 - [ ] All three have read the state machine and agree
-- [ ] Endpoint list committed to the repo as `docs/API.md`
-- [ ] `metadata.json` shape committed as a real example file, not prose
-- [ ] A hand written sample `metadata.json` and a sample `.ply` committed so Web and Unity can build against them before Track A produces real output
+- [x] Endpoint list committed to the repo as `docs/API.md`
+- [x] `metadata.json` shape committed as a real example file, not prose — `docs/samples/metadata.example.json`
+- [ ] A hand written sample `metadata.json` and a sample `.ply` committed so Web and Unity can build against them before Track A produces real output — metadata sample committed; the `.ply` deliberately is **not**, per the rule that no `.ply` enters git — it moves over Taildrop
 
 ## Section 07. Track A, GPU reconstruction [W]
 
@@ -421,12 +421,12 @@ Record which machine produced which result. When two machines disagree, and they
 
 #### Track A milestones
 
-- [ ] CUDA, COLMAP, and training framework all working on the Legion
-- [ ] First `.ply` exported from your own capture
-- [ ] Capture protocol written to `docs/CAPTURE.md`
-- [ ] VRAM safe preset found and recorded for 8 GB
+- [x] CUDA, COLMAP, and training framework all working on the Legion
+- [x] First `.ply` exported from your own capture
+- [x] Capture protocol written to `docs/CAPTURE.md`
+- [x] VRAM safe preset found and recorded for 8 GB — `gpu/PRESET.md`, validated on a second capture
 - [ ] FastAPI worker claiming jobs from the shared queue
-- [ ] Metric scale solved and written into `metadata.json`
+- [x] Metric scale solved and written into `metadata.json` — unitScale 0.369573 via the marker; written by `gpu/run_scene.py`
 - [ ] All three machines registered as workers
 - [ ] Poisson mesh export path working, for colliders
 - [ ] Three physical scenes and three synthetic scenes reconstructed with metrics recorded
@@ -466,14 +466,14 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 #### Track B milestones
 
 - [ ] Schema migrated, seed script for a test user and case
-- [ ] Upload, hash, enqueue working end to end
+- [x] Upload, hash, enqueue working end to end
 - [ ] Real GPU worker driving a job to READY
 - [ ] Dashboard with live status and asset download
-- [ ] Login plus JWT plus three roles enforced server side
-- [ ] Hash chained audit log, with a verification endpoint
+- [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
+- [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
 - [ ] AES-256-GCM asset encryption, with the key outside the DB
 - [ ] Anchor store and resolve endpoints for Unity
-- [ ] Rate limiting and uniform error handling
+- [ ] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting outstanding
 - [ ] Custody overhead measured, milliseconds per write, for Challenge 4
 
 ## Section 09. Track C, Unity AR client [T]
@@ -604,10 +604,10 @@ SfM tooling and Unity do not share conventions. SfM output is typically right ha
 
 #### Sanity checks
 
-- [ ] Reconstruct a scene containing an object of known size, measure it in scene units, and confirm the scale factor recovers the real measurement within a couple of centimetres
+- [ ] Reconstruct a scene containing an object of known size, measure it in scene units, and confirm the scale factor recovers the real measurement within a couple of centimetres — the marker recovers 170.0 mm, but that is **circular by construction** since the marker defines the scale. An independent second object is still outstanding (FTW-36)
 - [ ] Confirm text or an asymmetric object in the scene is not mirrored. Mirroring means a handedness error
 - [ ] Place the scene in AR by marker and check a real doorway lines up with the rendered doorway
-- [ ] `docs/FRAMES.md` written and agreed
+- [x] `docs/FRAMES.md` written and agreed
 
 ## Section 12. Evaluation plan
 
