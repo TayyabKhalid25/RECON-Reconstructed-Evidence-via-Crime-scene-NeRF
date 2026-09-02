@@ -49,17 +49,38 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.has.outputs.web == 'yes'
         with:
-          node-version: 20
+          # Matches the Node pin in docs/STACK.md (22 LTS; v22.23.2 installed).
+          # CI on a different major than everyone develops against defeats the
+          # point of pinning it.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - name: Install
         if: steps.has.outputs.web == 'yes'
         working-directory: web
         run: npm ci
-      - name: Lint and test
+      - name: Generate Prisma client and route types
         if: steps.has.outputs.web == 'yes'
         working-directory: web
         run: |
-          npm run lint --if-present
-          npm test --if-present
+          # Both read local files only and need no database.
+          # Without them typecheck fails on missing @prisma/client types and on
+          # Next 16's generated RouteContext union, which lives in .next/types
+          # and is gitignored.
+          npx prisma generate
+          npx next typegen
+      - name: Lint, typecheck and unit tests
+        if: steps.has.outputs.web == 'yes'
+        working-directory: web
+        # `npm run verify` is typecheck + lint + the check:* scripts, and it
+        # grows as scripts are added rather than needing a workflow edit.
+        # Was `npm run lint --if-present` plus `npm test --if-present`, and
+        # since there is no `test` script that second line was a silent no-op:
+        # typecheck and the check:* scripts had never run in CI once. That is
+        # how 44 broken `@/lib/*` imports reached main unnoticed.
+        # A single script keeps CI and the local pre-push command identical, so
+        # "it passed locally" and "it passed in CI" mean the same thing.
+        run: npm run verify
 
   # Activates by itself once gpu/ contains Python; green no-op until then.
   gpu:
