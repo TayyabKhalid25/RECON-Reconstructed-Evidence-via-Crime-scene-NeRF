@@ -52,7 +52,7 @@ export const GET = withErrors(
       targetId: asset.id,
     })
 
-    return new Response(assetStream(asset.storageKey), {
+    return new Response(await assetStream(asset.storageKey), {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Content-Length': String(asset.byteSize),

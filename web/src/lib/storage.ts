@@ -1,7 +1,14 @@
 import { createReadStream } from 'node:fs'
-import { mkdir, stat, writeFile } from 'node:fs/promises'
+import { mkdir, open, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Readable } from 'node:stream'
+import {
+  HEADER_LEN,
+  encryptBuffer,
+  encryptionEnabled,
+  isEncrypted,
+  streamingDecipher,
+} from './encryption'
 
 /**
  * Asset storage. FTW-13 decided disk plus tunnel, so this writes under
@@ -54,10 +61,18 @@ export function assetKey(sceneId: string, filename: string): string {
   return path.posix.join('scenes', sceneId, safe)
 }
 
+/**
+ * Writes an asset, encrypting at rest when the deployment asks for it.
+ *
+ * Callers pass plaintext and hash it themselves first: the custody SHA-256 is of
+ * the bytes the investigator uploaded, not of the ciphertext, and Asset.byteSize
+ * is the plaintext length. Encrypting here rather than in the routes is what
+ * keeps that ordering correct in one place instead of three.
+ */
 export async function writeAsset(storageKey: string, data: Buffer): Promise<void> {
   const abs = resolveKey(storageKey)
   await mkdir(path.dirname(abs), { recursive: true })
-  await writeFile(abs, data)
+  await writeFile(abs, encryptionEnabled() ? encryptBuffer(data) : data)
 }
 
 export async function assetExists(storageKey: string): Promise<boolean> {
@@ -69,17 +84,61 @@ export async function assetExists(storageKey: string): Promise<boolean> {
   }
 }
 
+/**
+ * Size ON DISK, which for an encrypted asset is HEADER_LEN larger than the
+ * plaintext. Never use this for Content-Length: that comes from
+ * Asset.byteSize, which records the plaintext length the client will receive.
+ */
 export async function assetByteSize(storageKey: string): Promise<number> {
   return (await stat(resolveKey(storageKey))).size
+}
+
+/** Plaintext length, whether or not the file on disk is encrypted. */
+export async function assetPlaintextSize(storageKey: string): Promise<number> {
+  const abs = resolveKey(storageKey)
+  const size = (await stat(abs)).size
+  return (await readHeader(abs)) ? size - HEADER_LEN : size
+}
+
+/**
+ * Reads the encryption header if the file has one, else null.
+ *
+ * A plaintext file is served untouched, which is what makes switching
+ * encryption on for a deployment that already has assets on disk safe: old
+ * files keep working and new ones are encrypted.
+ */
+async function readHeader(abs: string): Promise<Buffer | null> {
+  const fh = await open(abs, 'r')
+  try {
+    const head = Buffer.alloc(HEADER_LEN)
+    const { bytesRead } = await fh.read(head, 0, HEADER_LEN, 0)
+    const got = head.subarray(0, bytesRead)
+    return isEncrypted(got) ? got : null
+  } finally {
+    await fh.close()
+  }
 }
 
 /**
  * Web-standard stream for a route response. A 44 MB .ply must not be buffered
  * into memory to be served, and it will be fetched by a phone over the tunnel.
+ *
+ * Decrypts on the way out when the file is encrypted. Async because that
+ * decision needs the first 36 bytes off disk; a plaintext file takes the same
+ * path it always did.
  */
-export function assetStream(storageKey: string): ReadableStream<Uint8Array> {
-  const nodeStream = createReadStream(resolveKey(storageKey))
-  return Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>
+export async function assetStream(
+  storageKey: string
+): Promise<ReadableStream<Uint8Array>> {
+  const abs = resolveKey(storageKey)
+  const head = await readHeader(abs)
+  if (!head) {
+    return Readable.toWeb(createReadStream(abs)) as ReadableStream<Uint8Array>
+  }
+  // Skip the header: it is framing, not ciphertext.
+  const body = createReadStream(abs, { start: HEADER_LEN })
+  const plain = body.pipe(streamingDecipher(head))
+  return Readable.toWeb(plain) as ReadableStream<Uint8Array>
 }
 
 /**

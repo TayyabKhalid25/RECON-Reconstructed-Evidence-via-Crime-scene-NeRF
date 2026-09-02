@@ -471,7 +471,7 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 - [ ] Dashboard with live status and asset download
 - [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
 - [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
-- [ ] AES-256-GCM asset encryption, with the key outside the DB
+- [x] AES-256-GCM asset encryption, with the key outside the DB — application level envelope encryption (option 3), `web/src/lib/encryption.ts`. Enabling it is a deployment step: `ASSET_ENCRYPTION=on` plus a key
 - [ ] Anchor store and resolve endpoints for Unity
 - [ ] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting outstanding
 - [ ] Custody overhead measured, milliseconds per write, for Challenge 4
