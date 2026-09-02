@@ -91,7 +91,7 @@ that merges the commands above do not exist yet.
   UnitySplats renderer and is created by the package's own editor bootstrap on first import. It
   is committed; do not delete it.
 - **Deep worktree paths break on Windows.** The template's asset paths exceed MAX_PATH under a
-  long root. `git config --global core.longpaths true` and a short root such as `%TEMP%w\<name>`.
+  long root. `git config --global core.longpaths true` and a short root such as `%TEMP%\rw\<name>`.
 
 ## Never commit
 
