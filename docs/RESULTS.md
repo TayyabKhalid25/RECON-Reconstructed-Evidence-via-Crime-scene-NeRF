@@ -83,6 +83,53 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 |---|---|---|---|---|
 | | | | | |
 
+## Collider mesh from splats, measured 2026-09-02 (legion)
+
+Handbook Section 07 wants a "Poisson mesh export path working, for colliders", and Section 09 names
+the comparison of this mesh against the AR-plane baseline as the project's research contribution.
+`tools/splat_to_mesh.py` on `exports/1/splat_unity.ply` (scene 1, 178 333 splats).
+
+| | Poisson (depth 9) | Voxel marching cubes (0.05 units) |
+|---|---|---|
+| Splats used | 141 522 of 178 333 (79.4 %) | same |
+| Triangles before decimation | 386 356 | 512 518 |
+| Triangles after | 50 000 | 49 999 |
+| Vertices | 25 127 | 21 250 |
+| Disconnected clusters | **1 091** | **26 705** |
+| Removed as noise (<100 tris) | 12 187 triangles | 300 419 triangles |
+| Bounding-box coverage per axis | 79 / 71 / 84 % | 58 / 49 / 44 % |
+| Vertex-to-splat distance, median | 0.105 units (≈3.9 cm) | 0.039 units (≈1.4 cm) |
+| Vertex-to-splat distance, p95 | 0.334 units (≈12.3 cm) | 0.069 units (≈2.5 cm) |
+| Watertight | no | no |
+
+Distances are in scene units; the centimetre figures apply unitScale 0.369573 and are indicative
+only. Raw report: `docs/results/2026-09-02-scene1-collider-mesh.json`.
+
+**Poisson is the right default and the cluster count is why.** A splat cloud is sparse oriented
+points, not a dense scan: at 0.05 scene units the occupancy grid fragments into **26 705**
+disconnected shells, and cleaning those away deletes half the room. Poisson fits one global
+implicit surface, so it produces 1 091 clusters and keeps 79-84 % of the extent.
+
+**The two methods fail in opposite directions, which is exactly why both are implemented.** Voxel
+sits closer to the splats (median 1.4 cm against 3.9 cm) because it only ever puts surface where
+splats were — but it leaves holes, and a hole in a collider means shots pass through a wall.
+Poisson covers the room but smooths, and it invents surface in unobserved regions, which is what
+`--density-quantile` trims. For Challenge 1 ("how much mesh approximation error is tolerable before
+trajectories diverge") this table is the starting point: the same shot fired into these two
+colliders should diverge by something close to the difference in these deviation figures.
+
+Neither mesh is watertight yet, and coverage is not 100 %. Some of that shortfall is intended — the
+density trim removes the sparse fringe, which is where the bounding-box extremes are — but it has
+not been separated from genuine gaps. **Nothing here is validated against a physical measurement
+yet**, so these are geometry-vs-geometry numbers, not accuracy numbers.
+
+A bug found and fixed while producing this, recorded because it would have been invisible: the
+cleanup step originally dropped clusters smaller than 0.1 % of total triangles. That relative
+threshold silently cut the mesh to 8.0 x 4.7 x 7.7 scene units against a 24.7 x 15.5 x 23.5 splat
+extent — a collider covering a third of the room, with physics still running and shots passing
+through the rest. The threshold is now absolute, and the tool prints per-axis coverage on every run
+so the same class of failure is loud rather than silent.
+
 ## Scale checks
 
 | Date | Scene | Real measurement | Reconstructed measurement | Error (cm) |
