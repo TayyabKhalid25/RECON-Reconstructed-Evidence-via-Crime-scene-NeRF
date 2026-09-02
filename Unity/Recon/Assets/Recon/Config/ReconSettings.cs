@@ -31,6 +31,13 @@ namespace Recon.Config
         public string arPlanesLayer = "ArPlanes";
         public string splatMeshLayer = "SplatMesh";
 
+        [Header("Physics and ballistics (FTW-71)")]
+        [Tooltip("Collider mesh from tools/splat_to_mesh.py, in the dev scene folder next to the .ply. SCENE UNITS like the splat: SceneRoot applies unitScale to both.")]
+        public string colliderMeshFileName = "collider_mesh.ply";
+
+        [Tooltip("Folder under persistentDataPath for the shot logs the Challenge 1 study reads back. Pull with adb, same as perf/.")]
+        public string shotLogFolder = "shots";
+
         static ReconSettings s_instance;
 
         public static ReconSettings Instance
