@@ -154,7 +154,13 @@ activemq-data/
 *.sage.py
 
 # Environments
+# Any dotenv variant, because the narrow `.env` pattern let a `.env.bak.<ts>`
+# holding JWT_SECRET and ASSET_ENCRYPTION_KEY show up as untracked. `.env.local`,
+# `.env.production` and hand-made backups were all equally exposed. The example
+# file is the one deliberate exception and is negated below.
 .env
+.env.*
+!.env.example
 .envrc
 .venv
 env/
