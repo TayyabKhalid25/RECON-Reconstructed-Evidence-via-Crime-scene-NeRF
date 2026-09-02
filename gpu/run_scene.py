@@ -301,6 +301,7 @@ class VramSampler:
         self.samples = []
         self._stop = threading.Event()
         self._thread = None
+        self.errors = 0
         self.available = shutil.which("nvidia-smi") is not None
 
     def _loop(self):
@@ -309,12 +310,17 @@ class VramSampler:
                 out = subprocess.run(
                     ["nvidia-smi", "--query-gpu=memory.used",
                      "--format=csv,noheader,nounits"],
-                    capture_output=True, text=True, timeout=10)
+                    capture_output=True, text=True, timeout=10, check=False)
                 line = out.stdout.strip().splitlines()
                 if line:
                     self.samples.append((time.time(), line[0].strip()))
-            except Exception:
-                pass
+            except (OSError, subprocess.SubprocessError) as e:
+                # A sampling hiccup must never kill a training run that is
+                # minutes in, but swallowing it silently would let "peak VRAM
+                # null" look like a machine without a GPU. Count and report once.
+                self.errors += 1
+                if self.errors == 1:
+                    log(f"VRAM sampling failed ({e}); continuing without it")
             self._stop.wait(self.interval)
 
     def __enter__(self):
@@ -333,8 +339,7 @@ class VramSampler:
             t0 = self.samples[0][0]
             with open(self.csv_path, "w") as f:
                 f.write("seconds,memory_used_mib\n")
-                for t, v in self.samples:
-                    f.write(f"{t - t0:.1f},{v}\n")
+                f.writelines(f"{t - t0:.1f},{v}\n" for t, v in self.samples)
             log(f"VRAM samples -> {self.csv_path}")
         return False
 
@@ -352,7 +357,7 @@ def stage_preflight(ctx):
     problems = []
 
     r = subprocess.run([sys.executable, str(TOOLS / "patch_nerfstudio_colmap313.py"),
-                        "--check"], capture_output=True, text=True)
+                        "--check"], capture_output=True, text=True, check=False)
     if r.returncode != 0:
         problems.append(
             "Nerfstudio is not patched for COLMAP 3.13 -- ns-process-data will die "
@@ -477,7 +482,7 @@ def stage_unitscale(ctx):
         [sys.executable, str(TOOLS / "compute_unitscale.py"),
          "--data", ctx["dataset"], "--marker-m", str(MARKER_EDGE_M),
          "--json-out", str(out)],
-        capture_output=True, text=True)
+        capture_output=True, text=True, check=False)
     sys.stdout.write(r.stdout)
     if r.returncode != 0 or not out.is_file():
         sys.stderr.write(r.stderr)
@@ -579,7 +584,11 @@ def stage_results(ctx):
     if ctx.get("eval_fps"):
         notes += f". Eval fps {ctx['eval_fps']:.1f}"
     row = results_row(
-        date=dt.date.today().isoformat(), scene=ctx["scene"], machine=ctx["machine"],
+        # Local date deliberately, not UTC: RESULTS.md records the day the
+        # person did the work, and the team is UTC+5 -- a late-evening run would
+        # otherwise be filed under yesterday. astimezone() makes it tz-aware.
+        date=dt.datetime.now().astimezone().date().isoformat(),
+        scene=ctx["scene"], machine=ctx["machine"],
         frames=ctx.get("frames_posed", "-"),
         registered_pct=ctx.get("registered_pct"),
         iterations=PRESET_ITERATIONS,
