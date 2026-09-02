@@ -7,9 +7,16 @@ whole pipeline, and this file says where.
 ## The rule
 
 **Convert once, on the GPU side, before export.** The exported `.ply` is already in Unity's
-convention: left handed, Y up, metres. `metadata.json` records `handedness` and `upAxis` so the
-Unity client asserts them instead of guessing. If the client ever sees anything other than
-`left` / `y`, it refuses the scene loudly.
+convention: left handed, Y up, in **scene units** (not metres). `metadata.json` records
+`handedness` and `upAxis` so the Unity client asserts them instead of guessing, and `unitScale`
+(metres per scene unit) so the client scales the scene root once. If the client ever sees
+anything other than `left` / `y`, or a `unitScale` of 0, it refuses the scene loudly.
+
+Scale is deliberately **not** baked into the `.ply`: `gpu/run_scene.py` runs the conversion
+without `--unit-scale`, the export and the collider mesh from `tools/splat_to_mesh.py` stay in
+scene units, `metadata.json.boundingBox` is in scene units too, and Unity applies `unitScale`
+exactly once on `SceneRoot`. Baking metres into the file while Unity also scales is the
+double-scale bug, which presents as a modelling error rather than a unit error.
 
 Never apply a flip on the Unity side. Two conversions cancel out and cost a day to find.
 
@@ -89,4 +96,4 @@ re-measure, because a different printer may scale differently.
 - [ ] Diagram added showing both frames and the conversion
 - [ ] Tayyab initials: ____
 - [ ] Wahaj initials: ____
-- [ ] Faizan initials: ____
+- [x] Faizan initials: FT, 2026-09-02
