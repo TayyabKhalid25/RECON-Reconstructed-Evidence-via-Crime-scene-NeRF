@@ -1,0 +1,41 @@
+name: Delete Old Merged Branches
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete branches merged over 15 days ago
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Calculate the date 15 days ago in ISO 8601 format
+          THRESHOLD_DATE=$(date -d "15 days ago" --utc +%Y-%m-%dT%H:%M:%SZ)
+          
+          echo "Finding merged PRs older than $THRESHOLD_DATE..."
+          
+          # Query GitHub for PRs merged before the threshold date and extract the branch names
+          BRANCHES=$(gh pr list --state merged --limit 100 --json headRefName,mergedAt \
+            -q ".[] | select(.mergedAt < \"$THRESHOLD_DATE\") | .headRefName")
+          
+          if [ -z "$BRANCHES" ]; then
+            echo "No old merged branches found."
+            exit 0
+          fi
+          
+          # Loop through and delete the branches via the GitHub API
+          for branch in $BRANCHES; do
+            echo "Deleting branch: $branch"
+            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" || echo "Branch $branch may have already been deleted."
+          done
