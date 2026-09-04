@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runs the pure C# cores of Assets/Recon (every file under a Core/ folder) and their tests
+    under plain dotnet, so validation, trajectory integration, spatter maths and PLY parsing are
+    tested on a machine without the Unity Editor and in CI. The same test files also compile
+    into Recon.Tests inside Unity; they must use only NUnit constraint asserts and no UnityEngine.
+
+      dotnet test Unity/Recon.Core.Tests
+
+    LangVersion 9 matches Unity 6's C# level so nothing compiles here that Unity would reject.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>Recon</RootNamespace>
+    <AssemblyName>Recon.Core.Tests</AssemblyName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Also matches Tests/EditMode/Core/*.cs: the Core tests ride the same glob. -->
+    <Compile Include="..\Recon\Assets\Recon\**\Core\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

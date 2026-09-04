@@ -1,0 +1,25 @@
+{
+    "name": "Recon.Rendering.UnitySplats",
+    "rootNamespace": "Recon.Rendering.UnitySplats",
+    "references": [
+        "Recon.Runtime",
+        "Gsplat"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "RECON_UNITYSPLATS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.arloopa.unitysplats",
+            "expression": "",
+            "define": "RECON_UNITYSPLATS"
+        }
+    ],
+    "noEngineReferences": false
+}
