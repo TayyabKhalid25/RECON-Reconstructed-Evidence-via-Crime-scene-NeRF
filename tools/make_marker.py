@@ -1,47 +1,47 @@
 #!/usr/bin/env python3
 """Generate a printable, feature-dense, asymmetric scale/alignment marker.
 
-Three consumers, one pattern:
-  - the printed sheet (PDF)                 -> what gets taped to the floor and measured
-  - ARCore / AR Foundation tracked image    -> wants a raster (PNG) of just the target,
-                                               dense non-repetitive detail, no page margins
-  - COLMAP marker detection for unitScale   -> wants a crisp measurable outer edge
+Two consumers, one sheet:
+  - ARCore / AR Foundation tracked image  -> wants dense non-repetitive detail
+  - COLMAP marker detection for unitScale -> wants a crisp measurable outer edge
 
-Nominal sizes are printed ON the sheet, but the number that goes into docs/FRAMES.md is the
-one you measure with a ruler after printing (170.0 mm as of 2026-08-23).
-
-Deterministic: same seed -> byte-identical output, so a reprint is the same marker and the
-PNG in the Unity reference image library is the same image as the sheet on the floor. The
-PDF and SVG bytes are unchanged from the original generator; the PNG emitter draws the same
-primitive list, so there is exactly one description of the pattern in this file.
-
-Usage:
-  python tools/make_marker.py                 # A4 + A3: .pdf, .svg, and <base>.png of the target
-  python tools/make_marker.py --png-px-per-mm 12
+Nominal sizes are printed ON the sheet, but the number that goes into
+docs/FRAMES.md is the one you measure with a ruler after printing.
+Deterministic: same seed -> byte-identical output, so a reprint is the same marker.
 """
-import argparse
 import random
 
 MM = 72.0 / 25.4  # PDF points per millimetre
 
 
 def build(rng, page_w, page_h, target_mm, cells, label):
-    """Return (primitives, target_box) for one sheet.
-
-    primitives: list of ("rect", x, y, w, h, col) | ("tri", pts, col) | ("text", x, y, size, s)
-                in page millimetres, PDF axes (origin bottom-left, y up).
-    target_box: (tx, ty, target_mm) — the black outer square that gets measured.
-    """
-    prims = []
+    """Return (pdf_content_stream_ops, svg_body) for one sheet."""
+    ops, svg = [], []
 
     def rect(x, y, w, h, col):
-        prims.append(("rect", x, y, w, h, col))
+        ops.append(f"{col} rg {x*MM:.3f} {y*MM:.3f} {w*MM:.3f} {h*MM:.3f} re f")
+        # SVG y axis is flipped relative to PDF
+        r, g, b = col.split()
+        c = "#%02x%02x%02x" % (int(float(r)*255), int(float(g)*255), int(float(b)*255))
+        svg.append(f'<rect x="{x:.3f}" y="{page_h-y-h:.3f}" width="{w:.3f}" '
+                   f'height="{h:.3f}" fill="{c}"/>')
 
     def tri(pts, col):
-        prims.append(("tri", pts, col))
+        p = " ".join(f"{x*MM:.3f} {y*MM:.3f}" for x, y in pts)
+        parts = p.split()
+        ops.append(f"{col} rg {parts[0]} {parts[1]} m {parts[2]} {parts[3]} l "
+                   f"{parts[4]} {parts[5]} l h f")
+        r, g, b = col.split()
+        c = "#%02x%02x%02x" % (int(float(r)*255), int(float(g)*255), int(float(b)*255))
+        pl = " ".join(f"{x:.3f},{page_h-y:.3f}" for x, y in pts)
+        svg.append(f'<polygon points="{pl}" fill="{c}"/>')
 
     def text(x, y, size, s):
-        prims.append(("text", x, y, size, s))
+        esc = s.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+        ops.append(f"0 0 0 rg BT /F1 {size:.1f} Tf {x*MM:.3f} {y*MM:.3f} Td ({esc}) Tj ET")
+        svg.append(f'<text x="{x:.3f}" y="{page_h-y:.3f}" font-family="Helvetica" '
+                   f'font-size="{size*25.4/72:.3f}" fill="#000">'
+                   f'{s.replace("&","&amp;").replace("<","&lt;")}</text>')
 
     BLACK, WHITE, GREY = "0 0 0", "1 1 1", "0.28 0.28 0.28"
 
@@ -121,52 +121,7 @@ def build(rng, page_w, page_h, target_mm, cells, label):
     text(tx, by-31,   8, "Matte paper only - gloss highlights break COLMAP matching and ARCore tracking.")
     text(tx, by-38,   8, "W and H should agree; if they differ the printer scaled the axes unevenly - record both.")
 
-    return prims, (tx, ty, target_mm)
-
-
-def _hex(col):
-    r, g, b = col.split()
-    return "#%02x%02x%02x" % (int(float(r)*255), int(float(g)*255), int(float(b)*255))
-
-
-def to_pdf_ops(prims):
-    """PDF content-stream ops, byte-identical to the original inline emitter."""
-    ops = []
-    for p in prims:
-        if p[0] == "rect":
-            _, x, y, w, h, col = p
-            ops.append(f"{col} rg {x*MM:.3f} {y*MM:.3f} {w*MM:.3f} {h*MM:.3f} re f")
-        elif p[0] == "tri":
-            _, pts, col = p
-            s = " ".join(f"{x*MM:.3f} {y*MM:.3f}" for x, y in pts)
-            parts = s.split()
-            ops.append(f"{col} rg {parts[0]} {parts[1]} m {parts[2]} {parts[3]} l "
-                       f"{parts[4]} {parts[5]} l h f")
-        else:
-            _, x, y, size, s = p
-            esc = s.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
-            ops.append(f"0 0 0 rg BT /F1 {size:.1f} Tf {x*MM:.3f} {y*MM:.3f} Td ({esc}) Tj ET")
-    return ops
-
-
-def to_svg_body(prims, page_h):
-    """SVG elements, byte-identical to the original inline emitter (SVG y axis is flipped)."""
-    svg = []
-    for p in prims:
-        if p[0] == "rect":
-            _, x, y, w, h, col = p
-            svg.append(f'<rect x="{x:.3f}" y="{page_h-y-h:.3f}" width="{w:.3f}" '
-                       f'height="{h:.3f}" fill="{_hex(col)}"/>')
-        elif p[0] == "tri":
-            _, pts, col = p
-            pl = " ".join(f"{x:.3f},{page_h-y:.3f}" for x, y in pts)
-            svg.append(f'<polygon points="{pl}" fill="{_hex(col)}"/>')
-        else:
-            _, x, y, size, s = p
-            svg.append(f'<text x="{x:.3f}" y="{page_h-y:.3f}" font-family="Helvetica" '
-                       f'font-size="{size*25.4/72:.3f}" fill="#000">'
-                       f'{s.replace("&","&amp;").replace("<","&lt;")}</text>')
-    return svg
+    return ops, svg
 
 
 def emit_pdf(path, page_w, page_h, ops):
@@ -202,68 +157,11 @@ def emit_svg(path, page_w, page_h, svg):
         f'<rect width="{page_w}" height="{page_h}" fill="#fff"/>\n{body}\n</svg>\n')
 
 
-def emit_png_target(path, prims, target_box, px_per_mm=12, supersample=4):
-    """Rasterise ONLY the target square (the black outer edge and everything inside it) to a PNG.
-
-    This is the image for the AR reference image library: ARCore wants a raster, not an SVG,
-    and it should contain no page margins, ruler or text. Drawn at supersample x resolution
-    and downsampled so edges are clean at any DPI. Text primitives are outside the target by
-    construction and are skipped. Requires Pillow (`pip install pillow`).
-    """
-    from PIL import Image, ImageDraw
-
-    tx, ty, size_mm = target_box
-    px = int(round(size_mm * px_per_mm))
-    ss = supersample
-    img = Image.new("L", (px*ss, px*ss), 255)
-    draw = ImageDraw.Draw(img)
-    scale = px*ss / size_mm
-
-    def X(x): return (x - tx) * scale
-    def Y(y): return (ty + size_mm - y) * scale      # PDF y-up -> image y-down
-
-    def grey(col):
-        r, g, b = (float(c) for c in col.split())
-        return int(round((0.2126*r + 0.7152*g + 0.0722*b) * 255))
-
-    eps = 1e-6
-    for p in prims:
-        if p[0] == "rect":
-            _, x, y, w, h, col = p
-            if x < tx - eps or y < ty - eps or x + w > tx + size_mm + eps or y + h > ty + size_mm + eps:
-                continue
-            draw.rectangle([X(x), Y(y+h), X(x+w), Y(y)], fill=grey(col))
-        elif p[0] == "tri":
-            _, pts, col = p
-            if any(x < tx - eps or x > tx + size_mm + eps or y < ty - eps or y > ty + size_mm + eps for x, y in pts):
-                continue
-            draw.polygon([(X(x), Y(y)) for x, y in pts], fill=grey(col))
-    img = img.resize((px, px), Image.LANCZOS)
-    img.save(path, format="PNG", optimize=True)
-    return px
-
-
-def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--png-px-per-mm", type=int, default=12,
-                    help="PNG resolution of the target square (default 12 -> 2040 px for 170 mm). 0 disables the PNG.")
-    ap.add_argument("--seed", type=int, default=20260822,
-                    help="RNG seed. Changing it makes a DIFFERENT marker that will not match the printed one.")
-    args = ap.parse_args(argv)
-
-    for label, pw, ph, tgt, n in (("A4", 210.0, 297.0, 170.0, 17),
-                                  ("A3", 297.0, 420.0, 250.0, 21)):
-        rng = random.Random(args.seed)   # fixed: a reprint is the identical marker
-        prims, box = build(rng, pw, ph, tgt, n, label)
-        base = f"marker-{label.lower()}-{int(tgt)}mm"
-        size = emit_pdf(base + ".pdf", pw, ph, to_pdf_ops(prims))
-        emit_svg(base + ".svg", pw, ph, to_svg_body(prims, ph))
-        msg = f"{label}: target {tgt}mm, {n}x{n} cells -> {base}.pdf ({size} bytes) + .svg"
-        if args.png_px_per_mm > 0:
-            px = emit_png_target(base + ".png", prims, box, args.png_px_per_mm)
-            msg += f" + .png ({px}x{px} px, target only)"
-        print(msg)
-
-
-if __name__ == "__main__":
-    main()
+for label, pw, ph, tgt, n in (("A4", 210.0, 297.0, 170.0, 17),
+                              ("A3", 297.0, 420.0, 250.0, 21)):
+    rng = random.Random(20260822)   # fixed: a reprint is the identical marker
+    ops, svg = build(rng, pw, ph, tgt, n, label)
+    base = f"marker-{label.lower()}-{int(tgt)}mm"
+    size = emit_pdf(base + ".pdf", pw, ph, ops)
+    emit_svg(base + ".svg", pw, ph, svg)
+    print(f"{label}: target {tgt}mm, {n}x{n} cells -> {base}.pdf ({size} bytes) + .svg")

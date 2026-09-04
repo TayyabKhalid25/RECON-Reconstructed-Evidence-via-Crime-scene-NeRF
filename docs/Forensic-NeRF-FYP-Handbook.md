@@ -203,7 +203,7 @@ Fill the right column in once, on day one, with the exact versions you install. 
 | [T] C | Editor | Unity 6 LTS, pin the exact patch `verify` | ___ |
 | [T] C | Pipeline | URP | ___ |
 | [T] C | AR | AR Foundation 6.x plus ARKit and ARCore provider packages | ___ |
-| [T] C | Splat renderer | aras-p UnityGaussianSplatting, MIT `verify` | ___ |
+| [T] C | Splat renderer | aras-p UnityGaussianSplatting, MIT. **Verified 2026-09-02: MIT yes, but upstream does not support mobile** and will not; see `MOBILE-SPLAT-OPTIONS.md` | ___ |
 | [T] C | Anchors | Per Decision 1 | ___ |
 | [T] C | Physics | PhysX, bundled with Unity | ___ |
 
@@ -472,7 +472,7 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 - [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
 - [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
 - [ ] AES-256-GCM asset encryption, with the key outside the DB
-- [ ] Anchor store and resolve endpoints for Unity
+- [x] Anchor store and resolve endpoints for Unity — `POST`/`GET /api/scenes/:id/anchor`, 2026-09-02. Transform is decomposed rather than a 4x4 matrix, quaternion validated unit, expiry computed server side. Wire format in `API.md`. **Migration not yet applied**: the `Anchor` model needs `prisma migrate dev` on a machine with the stack up
 - [ ] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting outstanding
 - [ ] Custody overhead measured, milliseconds per write, for Challenge 4
 
@@ -496,7 +496,13 @@ Highest risk track, because it is the one where the desktop research tooling mee
 >
 > Splat renderers lean on compute shaders and per frame sorting, and mobile GPUs vary wildly in how well they cope. Assume you will need to cut splat counts hard. Ladder of fallbacks, in the order you should try them:
 >
-> 1. Decimate aggressively, prune low opacity splats, and cap count to whatever holds 30 fps on your actual test phone.
+> 1. Decimate aggressively and cap count to whatever holds 30 fps on your actual test phone.
+>    **Measured correction, 2026-09-02: "prune low opacity splats" does not work on our exports.**
+>    splatfacto already prunes at `cull-alpha-thresh 0.1`, so only 1.32 % of scene 1's splats sit
+>    below that and an opacity threshold removes almost nothing. Two levers that do work:
+>    truncating spherical harmonics (3.65x smaller, **no geometry change at all**, so accuracy
+>    figures are untouched), then capping count ranked by opacity x cross-section. Numbers in
+>    `RESULTS.md`, tool is `tools/decimate_splats.py`.
 > 2. Distance based level of detail, so only nearby splats are drawn at full density.
 > 3. **Ship a textured mesh on mobile** instead of splats. Poisson reconstruct from splat centres, bake colour to texture, and keep true splat rendering for the web dashboard preview where a desktop GPU is available. Your proposal already needs that mesh for colliders, so this is a reuse, not new work.
 >
