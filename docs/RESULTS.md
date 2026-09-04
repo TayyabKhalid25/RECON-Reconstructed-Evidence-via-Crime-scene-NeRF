@@ -179,7 +179,7 @@ the comparison of this mesh against the AR-plane baseline as the project's resea
 | Splats used | 141 522 of 178 333 (79.4 %) | same |
 | Triangles before decimation | 386 356 | 512 518 |
 | Triangles after | 50 000 | 49 999 |
-| Vertices | 25 127 | 21 250 |
+| Vertices | 25 129 | 21 250 |
 | Disconnected clusters | **1 091** | **26 705** |
 | Removed as noise (<100 tris) | 12 187 triangles | 300 419 triangles |
 | Bounding-box coverage per axis | 79 / 71 / 84 % | 58 / 49 / 44 % |

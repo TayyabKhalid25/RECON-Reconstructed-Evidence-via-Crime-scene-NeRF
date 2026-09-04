@@ -199,8 +199,9 @@ def build_cloud(points, normals):
 
 def reconstruct_poisson(pcd, depth, density_quantile):
     import open3d as o3d
+    # n_threads=1 ensures deterministic, bit-reproducible Poisson accumulation.
     mesh, density = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-        pcd, depth=depth
+        pcd, depth=depth, n_threads=1
     )
     if density_quantile > 0:
         # Poisson fabricates surface in unobserved regions and marks it with low
@@ -226,7 +227,8 @@ def reconstruct_voxel(points, voxel):
     np.clip(ijk, 0, np.array(dims) - 1, out=ijk)
     np.add.at(grid, (ijk[:, 0], ijk[:, 1], ijk[:, 2]), 1.0)
 
-    # A single stray splat should not become a floating cube of collider.
+    # Grid holds splat counts from np.add.at; isosurface at level=0.5 wraps populated
+    # voxels. Small isolated voxel clusters are pruned by --min-cluster-tris downstream.
     verts, faces, _, _ = measure.marching_cubes(grid, level=0.5)
     verts = verts * voxel + lo - voxel      # undo the 1-voxel pad
 
@@ -274,6 +276,54 @@ def clean_and_decimate(mesh, target_tris, min_cluster_tris=100):
     return mesh, stats
 
 
+def verify_mesh_ply(path):
+    """Assert output mesh PLY header matches the expected binary layout."""
+    with open(path, "rb") as f:
+        raw = f.read(4096)
+    idx = raw.find(HEADER_END)
+    if idx < 0:
+        sys.exit(f"{path}: missing end_header in generated PLY")
+    header = raw[:idx + len(HEADER_END)].decode("latin-1")
+    lines = header.splitlines()
+
+    if not lines or lines[0] != "ply":
+        sys.exit(f"{path}: header does not start with ply")
+    if len(lines) < 2 or lines[1] != "format binary_little_endian 1.0":
+        sys.exit(f"{path}: expected binary_little_endian 1.0, got {lines[1] if len(lines) > 1 else 'none'}")
+
+    h_lower = header.lower()
+    for req in ("vertical axis: y", "handedness: left", "units: scene units"):
+        if req not in h_lower:
+            sys.exit(f"{path}: header missing required comment: {req}")
+
+    v_props = []
+    face_prop = None
+    in_vertex = False
+    in_face = False
+    for line in lines:
+        if line.startswith("element vertex"):
+            in_vertex = True
+            in_face = False
+        elif line.startswith("element face"):
+            in_vertex = False
+            in_face = True
+        elif line.startswith("element "):
+            in_vertex = False
+            in_face = False
+        elif line.startswith("property") and in_vertex:
+            parts = line.split()
+            v_props.append(parts[-1])
+        elif line.startswith("property") and in_face:
+            face_prop = line
+
+    expected_v_props = ["x", "y", "z", "nx", "ny", "nz"]
+    if v_props != expected_v_props:
+        sys.exit(f"{path}: vertex properties {v_props} do not match expected {expected_v_props}")
+
+    if not face_prop or "vertex_indices" not in face_prop:
+        sys.exit(f"{path}: face property {face_prop} missing vertex_indices")
+
+
 def write_mesh(path, mesh, comments):
     """Open3D writes no comments, so the header is rewritten to carry the frame.
 
@@ -281,24 +331,39 @@ def write_mesh(path, mesh, comments):
     importing this in six weeks and guessing.
     """
     import open3d as o3d
-    o3d.io.write_triangle_mesh(str(path), mesh, write_ascii=False,
+    path_str = str(path)
+    if not path_str.endswith(".ply"):
+        sys.exit(f"Output must be a .ply file, got {path_str}")
+
+    o3d.io.write_triangle_mesh(path_str, mesh, write_ascii=False,
                                write_vertex_normals=True)
-    if not str(path).endswith(".ply"):
-        return
-    with open(path, "rb") as f:
+    with open(path_str, "rb") as f:
         raw = f.read()
     i = raw.find(b"format ")
     j = raw.find(b"\n", i)
     if i < 0 or j < 0:
-        return
+        sys.exit(f"{path_str}: failed to find format line in Open3D PLY output")
     injected = b"".join(f"comment {c}\n".encode("latin-1") for c in comments)
-    with open(path, "wb") as f:
+    with open(path_str, "wb") as f:
         f.write(raw[: j + 1] + injected + raw[j + 1:])
+
+    verify_mesh_ply(path_str)
+
+
+def sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(65536):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 # --------------------------------------------------------------------------
 
 def self_test():
+    import tempfile
+
     # Identity quaternion must give the identity matrix.
     r = quat_to_matrix([[1, 0, 0, 0]])[0]
     assert np.allclose(r, np.eye(3)), r
@@ -355,6 +420,12 @@ def self_test():
             pass
         else:
             raise AssertionError(f"frame gate accepted {bad!r}")
+
+    # verify_mesh_ply tests
+    with tempfile.NamedTemporaryFile(suffix=".ply", mode="w", delete=False) as f:
+        f.write("ply\nformat binary_little_endian 1.0\ncomment Vertical Axis: y\ncomment Handedness: left\ncomment Units: scene units\nelement vertex 3\nproperty double x\nproperty double y\nproperty double z\nproperty double nx\nproperty double ny\nproperty double nz\nelement face 1\nproperty list uchar uint vertex_indices\nend_header\n")
+        tmp_ply = f.name
+    verify_mesh_ply(tmp_ply)
 
     print("self-test OK")
 
@@ -481,10 +552,12 @@ def main():
     if args.report:
         report = {
             "input": args.input, "output": args.output, "method": args.method,
+            "sha256": sha256_file(args.output),
             "splatsIn": n_in, "splatsKept": n_kept,
             "minOpacity": args.min_opacity, "maxExtent": args.max_extent,
             "trianglesBeforeDecimation": raw_tris, "triangles": tris,
             "vertices": len(verts), "watertight": bool(mesh.is_watertight()),
+            "triangleWinding": "unspecified (handled by MeshCollider for non-convex collision)",
             "splatBBox": {"min": smin.tolist(), "max": smax.tolist()},
             "meshBBox": {"min": mmin.tolist(), "max": mmax.tolist()},
             "vertexToSplatDistanceSceneUnits": dev,

@@ -1,6 +1,6 @@
 {
   "input": "exports/1/splat_unity.ply",
-  "output": "/tmp/claude-1000/-home-wahaj-RECON-Reconstructed-Evidence-via-Crime-scene-NeRF/42c5f1c7-67d7-44bc-9bf5-90ce990519b9/scratchpad/scene1_mesh.ply",
+  "output": "outputs/scene1_mesh.ply",
   "method": "poisson",
   "splatsIn": 178333,
   "splatsKept": 141522,
