@@ -124,10 +124,12 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 **Still empty, and it is the most important empty table in this file.** Nothing has yet rendered
 on a phone, so the mobile splat budget remains provisional and FTW-38 stays blocked on the
 measurement. What we do know as of 2026-09-02 is a negative result from Track C (PR #14): the
-stock `aras-p/UnityGaussianSplatting` and the `wuyize25/gsplat-unity` fork both use HLSL wave
-intrinsics (`wavebasic`, `waveballot`) in the `SplatUtilities.compute` radix sort, which fail to
-compile on Mali/Adreno and take the whole shader file down with them. So the FPS figure is
-blocked on a renderer that runs at all, not on a capture.
+stock `aras-p/UnityGaussianSplatting` declares HLSL wave intrinsics (`wavebasic`, `waveballot`)
+at file scope in `SplatUtilities.compute`, which fail to compile on Mali/Adreno and take all 19
+kernels down with them. `gsplat-unity` isolates wave pragmas to its sort kernels, while
+`arloopa/UnitySplats` provides an async-CPU sort fallback for OpenGL ES 3.1. So the FPS figure is
+blocked on evaluating these alternative renderers, not on a capture. Full audit in
+`docs/MOBILE-SPLAT-OPTIONS.md`.
 
 ### Export decimation, measured 2026-09-02 (legion)
 

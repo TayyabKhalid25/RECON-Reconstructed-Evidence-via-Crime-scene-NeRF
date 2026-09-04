@@ -22,7 +22,7 @@ Why SH first, measured on exports/1/splat_unity.ply (178333 splats, scene 1):
   (about 3.9 levels of 255) across 400 random view directions, while cutting
   248 bytes/splat to 68 -- a 3.65x file reduction for no geometric change.
 
-  keep deg2 (drop 3):  62 -> 38 props, 1.63x,  mean dC 2.4/255,  p99 12.8/255
+  keep deg2 (drop 3):  62 -> 41 props, 1.51x,  mean dC 2.4/255,  p99 12.8/255
   keep deg1:           62 -> 26 props, 2.38x,  mean dC 3.2/255,  p99 16.4/255
   deg0 only:           62 -> 17 props, 3.65x,  mean dC 3.9/255,  p99 19.2/255
 
@@ -69,6 +69,9 @@ def read_ply(path):
         sys.exit(f"{path}: not a binary PLY with an end_header")
     header = raw[: i + len(HEADER_END)].decode("latin-1")
     body = raw[i + len(HEADER_END):]
+    format_lines = [line for line in header.splitlines() if line.startswith("format ")]
+    if not format_lines or format_lines[0] != "format binary_little_endian 1.0":
+        sys.exit(f"{path}: only binary_little_endian 1.0 supported, got {format_lines[0] if format_lines else 'none'}")
     names, count = [], None
     for line in header.splitlines():
         if line.startswith("element vertex"):
@@ -315,6 +318,27 @@ def self_test():
     c[:, names.index("x")] = [100, 200]
     kept3, _ = cap_splats(names, c, 1)
     assert kept3[0, names.index("x")] == 100, "area weighting not applied"
+
+    # sh_report checks: zero f_rest must have 0 error at deg 0, 1, 2.
+    zero_arr = np.zeros((10, len(names)), dtype="<f4")
+    r_zero = sh_report(names, zero_arr, n_views=50, sample=10)
+    assert r_zero is not None and len(r_zero) == 3
+    for row in r_zero:
+        assert row["mean"] == 0.0 and row["max"] == 0.0, f"expected 0 error for zeroed f_rest: {row}"
+
+    # Degree-1 only coefficients: degree >= 1 must have 0 error, degree 0 must have non-zero error.
+    deg1_arr = np.zeros((10, len(names)), dtype="<f4")
+    base = names.index("f_rest_0")
+    for ch in range(3):
+        for k in range(3):
+            deg1_arr[:, base + ch * 15 + k] = 1.0
+    r_deg1 = sh_report(names, deg1_arr, n_views=50, sample=10)
+    assert r_deg1 is not None
+    # r_deg1 rows are for degree 2, 1, 0
+    row_map = {row["degree"]: row for row in r_deg1}
+    assert row_map[2]["mean"] == 0.0 and row_map[2]["max"] == 0.0, "deg2 error should be 0 on deg1 data"
+    assert row_map[1]["mean"] == 0.0 and row_map[1]["max"] == 0.0, "deg1 error should be 0 on deg1 data"
+    assert row_map[0]["mean"] > 0.0 and row_map[0]["max"] > 0.0, "deg0 error should be >0 on deg1 data"
 
     print("self-test OK")
 
