@@ -1,22 +1,5 @@
 {
   "dependencies": {
-    "com.arloopa.unitysplats": {
-      "version": "https://github.com/arloopa/UnitySplats.git#6c0258189a2b124af1282fa9236fd9b6637f1a1a",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.netpyoung.webp": "0.3.22",
-        "com.unity.mathematics": "1.3.2"
-      },
-      "hash": "6c0258189a2b124af1282fa9236fd9b6637f1a1a"
-    },
-    "com.netpyoung.webp": {
-      "version": "0.3.22",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,
@@ -179,7 +162,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.2",
-      "depth": 0,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -262,7 +245,7 @@
     },
     "com.unity.test-framework": {
       "version": "1.6.0",
-      "depth": 0,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {
         "com.unity.ext.nunit": "2.0.3",
