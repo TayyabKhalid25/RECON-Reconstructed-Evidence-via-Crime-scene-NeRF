@@ -18,12 +18,9 @@ that breaks one track in November is a self inflicted wound.
 | PyTorch | matched to the CUDA toolkit | 2.7.1+cu126 (torchvision 0.22.1+cu126) | W |
 | COLMAP | 3.x | 3.13.0, conda-forge build `cuda_126h5ca8012_3` | W |
 | Nerfstudio (splatfacto) | current stable | 1.1.5 (gsplat 1.4.0, kernels JIT-built for sm_89) | W |
-| Unity | 6 LTS with URP | 6000.3.22f1, URP 17.3.0 | T |
-| AR Foundation | 6.x | 6.5.0 on main (ARCore + ARKit XR plugins 6.5.0, XR Management 4.6.0, XRI 3.5.1); PR #14 proposes 6.6.1 | T |
-| Splat renderer | mobile-capable Gaussian splat renderer, behind `Rendering/ISplatRenderer` | arloopa/UnitySplats 1.2.0, git `6c0258189a2b124af1282fa9236fd9b6637f1a1a` (MIT). aras-p ruled out on mobile 2026-09-02, see `MOBILE-SPLAT-OPTIONS.md` | F |
-| JSON (Unity) | com.unity.nuget.newtonsoft-json | 3.2.2 | F |
-| Unity Test Framework | 1.x | 1.6.0 (built in to 6000.3) | F |
-| .NET SDK (core tests) | 8.0 LTS | 8.0.411, `Unity/Recon.Core.Tests` | F |
+| Unity | 6 LTS with URP | | T |
+| AR Foundation | 6.x | | T |
+| Splat renderer | aras-p/UnityGaussianSplatting | | T |
 | Physics | PhysX, bundled with Unity | | T |
 
 Rule for the GPU track: no bleeding edge Python. Torch and CUDA wheels lag new Python releases
@@ -123,12 +120,3 @@ unavailable, or storage outgrowing the disk.
   1.4.0. The proposal's CUDA 12.x pin stands; do not "fix" it to 11.8.
 
 Once this table is filled, the proposal, the tech stack diagram, and the Gantt all match it.
-
-## Unity renderer, decided 2026-09-02 (FTW-69, Track C)
-
-**arloopa/UnitySplats first, wuyize25/gsplat-unity second, hand-patching aras-p (FTW-44) last**, per
-`MOBILE-SPLAT-OPTIONS.md`. Pinned by commit in `Unity/Recon/Packages/manifest.json`; its
-`com.netpyoung.webp` dependency comes from the OpenUPM scoped registry declared there. The package is
-loaded with `SourceCoordinates.RUF` (Unity, no conversion) because the `.ply` is already converted
-GPU side (`FRAMES.md`). App code only sees `Recon.Rendering.ISplatRenderer`; swapping the package is a
-new adapter, not a rewrite. Android graphics API is Vulkan only (no GLES3 fallback), MSAA and HDR off.
