@@ -44,6 +44,7 @@ model User {
 
   cases     Case[]
   auditLogs AuditLog[]
+  anchors   Anchor[]
 }
 
 model Case {
@@ -79,6 +80,11 @@ model Scene {
   /// Metres per scene unit, from the marker. Null until the GPU track computes
   /// it; Unity cannot place the twin at real size without it. See docs/FRAMES.md.
   unitScale Float?
+
+  /// Cloud anchors hosted for this scene. Append-only in practice: a re-host
+  /// adds a row rather than editing one, so "where did the twin sit last week"
+  /// stays answerable. The resolve endpoint returns the newest.
+  anchors Anchor[]
 
   @@index([caseId])
 }
@@ -123,6 +129,60 @@ model Asset {
 
   @@index([sceneId])
   @@index([sha256])
+}
+
+/// Where a scene sits in the real world, so a second device sees the twin in the
+/// same physical place. docs/API.md specifies the two endpoints; this is the
+/// model behind them.
+///
+/// The transform is stored decomposed (position, rotation quaternion, scale)
+/// rather than as a 4x4 matrix on purpose. A 16-float matrix in JSON carries a
+/// silent row-major versus column-major trap -- Unity's Matrix4x4 is
+/// column-major -- and a transposed matrix produces a twin that is subtly
+/// misplaced rather than obviously broken. That is the exact failure class
+/// docs/FRAMES.md exists to prevent.
+model Anchor {
+  id String @id @default(cuid())
+
+  /// The provider's anchor identifier, e.g. an ARCore Cloud Anchor id. Opaque
+  /// to us: we store and return it, the client resolves it.
+  anchorId String
+  /// Which anchoring service issued it. Recorded because Cloud Anchors is the
+  /// load-bearing dependency and a later switch must be visible in the data,
+  /// not inferred.
+  provider String @default("arcore-cloud-anchors")
+
+  /// anchor space -> scene space. Scene space is the Unity convention already
+  /// (left handed, Y up) because the .ply was converted GPU side; see
+  /// docs/FRAMES.md. Never add a flip on the client.
+  posX Float
+  posY Float
+  posZ Float
+  /// Unit quaternion. Validated as unit length on write: a non-normalised
+  /// quaternion skews the twin instead of rejecting the request.
+  rotX Float
+  rotY Float
+  rotZ Float
+  rotW Float
+  /// Uniform scale. Separate from Scene.unitScale, which converts scene units
+  /// to metres; this is the anchor-to-scene fit and is normally 1.
+  scale Float @default(1)
+
+  /// Cloud Anchors expire. Null means unknown rather than never, so a client
+  /// can tell "no expiry recorded" from "expires Tuesday".
+  expiresAt DateTime?
+  /// Which device hosted it, for the multi-device story in handbook Section 09.
+  deviceLabel String?
+
+  createdAt DateTime @default(now())
+
+  sceneId String
+  scene   Scene  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  @@index([sceneId, createdAt])
 }
 
 /// Append only. Each row hashes its own contents plus the previous row's hash,

@@ -472,7 +472,7 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 - [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
 - [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
 - [ ] AES-256-GCM asset encryption, with the key outside the DB
-- [ ] Anchor store and resolve endpoints for Unity
+- [x] Anchor store and resolve endpoints for Unity — `POST`/`GET /api/scenes/:id/anchor`, 2026-09-02. Transform is decomposed rather than a 4x4 matrix, quaternion validated unit, expiry computed server side. Wire format in `API.md`. **Migration not yet applied**: the `Anchor` model needs `prisma migrate dev` on a machine with the stack up
 - [ ] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting outstanding
 - [ ] Custody overhead measured, milliseconds per write, for Challenge 4
 
