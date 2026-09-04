@@ -81,6 +81,10 @@ check(
 )
 check('a positive scale is accepted', AnchorInput.safeParse(body({ scale: 1.02 })).success)
 check(
+  'unknown keys are rejected by strict schema',
+  !AnchorInput.safeParse(body({ unknownKey: 'foo' })).success
+)
+check(
   'a non-finite coordinate is refused',
   !AnchorInput.safeParse(body({ position: { x: Infinity, y: 0, z: 0 } })).success
 )
@@ -91,6 +95,14 @@ check(
 check(
   'an ISO expiresAt is accepted',
   AnchorInput.safeParse(body({ expiresAt: '2027-09-02T10:00:00Z' })).success
+)
+check(
+  'ttlDays is accepted and produces a future expiry',
+  (() => {
+    const p = AnchorInput.parse(body({ ttlDays: 30 }))
+    const c = toAnchorColumns(p)
+    return c.expiresAt !== null && c.expiresAt.getTime() > Date.now()
+  })()
 )
 
 // --- columns and response ------------------------------------------------
@@ -105,6 +117,17 @@ check(
   'rotation maps w correctly (the field most easily transposed)',
   cols.rotX === 0 && cols.rotY === 0 && cols.rotZ === 0 && cols.rotW === 1
 )
+
+// Normalisation test: slightly drifted quaternion is normalised on store
+const driftParsed = AnchorInput.parse(
+  body({ rotation: { x: 0, y: 0, z: 0, w: 1 + QUAT_TOLERANCE / 2 } })
+)
+const driftCols = toAnchorColumns(driftParsed)
+const storedLen = Math.sqrt(
+  driftCols.rotX ** 2 + driftCols.rotY ** 2 + driftCols.rotZ ** 2 + driftCols.rotW ** 2
+)
+check('stored quaternion is strictly normalised to length 1.0', Math.abs(storedLen - 1.0) < 1e-12)
+
 check('expiresAt becomes a Date', cols.expiresAt instanceof Date)
 check('omitted deviceLabel becomes null, not undefined', cols.deviceLabel === null)
 check(
@@ -152,7 +175,7 @@ check(
 )
 check(
   'the response states the frame convention (docs/FRAMES.md)',
-  out.frame.handedness === 'left' && out.frame.upAxis === 'y'
+  out.frame.handedness === 'left' && out.frame.upAxis === 'y' && out.frame.units === 'metres'
 )
 check(
   'a client parsing the response never sees the flat columns',

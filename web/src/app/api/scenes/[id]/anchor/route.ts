@@ -83,9 +83,10 @@ export const GET = withErrors(
       where: { sceneId: scene.id },
       orderBy: { createdAt: 'desc' },
     })
-    // Distinct from "scene not found" on purpose: the second device needs to
-    // tell "nobody has hosted an anchor yet" from "you cannot see this scene".
-    if (!anchor) return apiError('NOT_FOUND', 'Scene has no anchor yet')
+    // Distinct from "scene not found" on purpose: 200 with null anchor tells the
+    // second device that the scene exists but nobody has hosted an anchor yet,
+    // so it can fall back to marker/manual alignment cleanly without an error.
+    if (!anchor) return apiOk({ anchor: null })
 
     return apiOk({ anchor: serialiseAnchor(anchor) })
   }

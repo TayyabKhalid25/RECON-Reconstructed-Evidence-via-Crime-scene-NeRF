@@ -28,15 +28,17 @@ export const AnchorInput = z
   .object({
     anchorId: z.string().min(1).max(512),
     provider: z.string().min(1).max(64).optional(),
-    position: z.object({ x: coord, y: coord, z: coord }),
-    rotation: z.object({ x: coord, y: coord, z: coord, w: coord }),
+    position: z.object({ x: coord, y: coord, z: coord }).strict(),
+    rotation: z.object({ x: coord, y: coord, z: coord, w: coord }).strict(),
     // Normally 1. Rejecting zero and negatives because a zero-scale twin is
     // invisible and a negative one is mirrored, and both read as "the anchor
     // is broken" rather than "the request was wrong".
     scale: z.number().finite().positive().optional(),
     expiresAt: z.iso.datetime().optional(),
+    ttlDays: z.number().int().positive().optional(),
     deviceLabel: z.string().max(128).optional(),
   })
+  .strict()
   .refine((v) => isUnitQuaternion(v.rotation), {
     message:
       `rotation must be a unit quaternion (length 1 +/- ${QUAT_TOLERANCE}); ` +
@@ -61,20 +63,29 @@ export function isUnitQuaternion(q: {
   return Math.abs(len - 1) <= QUAT_TOLERANCE
 }
 
-/** Flat columns for Prisma. Kept next to the reader below so they cannot drift. */
+/** Flat columns for Prisma. Normalises quaternion defensively on store. */
 export function toAnchorColumns(input: AnchorInputType) {
+  const len = quaternionLength(input.rotation)
+  const normFactor = len > 1e-12 ? 1.0 / len : 1.0
+  let expiresAt: Date | null = null
+  if (input.expiresAt !== undefined) {
+    expiresAt = new Date(input.expiresAt)
+  } else if (input.ttlDays !== undefined) {
+    expiresAt = new Date(Date.now() + input.ttlDays * 86400 * 1000)
+  }
+
   return {
     anchorId: input.anchorId,
     ...(input.provider === undefined ? {} : { provider: input.provider }),
     posX: input.position.x,
     posY: input.position.y,
     posZ: input.position.z,
-    rotX: input.rotation.x,
-    rotY: input.rotation.y,
-    rotZ: input.rotation.z,
-    rotW: input.rotation.w,
+    rotX: input.rotation.x * normFactor,
+    rotY: input.rotation.y * normFactor,
+    rotZ: input.rotation.z * normFactor,
+    rotW: input.rotation.w * normFactor,
     ...(input.scale === undefined ? {} : { scale: input.scale }),
-    expiresAt: input.expiresAt === undefined ? null : new Date(input.expiresAt),
+    expiresAt,
     deviceLabel: input.deviceLabel ?? null,
   }
 }
@@ -103,7 +114,7 @@ type AnchorRow = {
  *
  * `expired` is computed rather than left to the client. A resolve that silently
  * returns a dead anchor looks like broken tracking on the phone, which is an
- * expensive thing to debug from the Unity side.
+ * expensive thing to debug from the Unity end.
  */
 export function serialiseAnchor(row: AnchorRow, now: Date = new Date()) {
   return {
@@ -120,6 +131,6 @@ export function serialiseAnchor(row: AnchorRow, now: Date = new Date()) {
     // Stated in the payload so nobody has to remember it from a doc, and so a
     // client that starts flipping axes is contradicting the response it was
     // handed. docs/FRAMES.md.
-    frame: { handedness: 'left', upAxis: 'y', space: 'anchor->scene' },
+    frame: { handedness: 'left', upAxis: 'y', space: 'anchor->scene', units: 'metres' },
   }
 }
