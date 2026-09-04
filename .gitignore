@@ -289,6 +289,8 @@ marker-*.svg
 # training exports (metadata.json is recorded under docs/results/ instead)
 exports/
 
+# Agent worktrees: scratch checkouts, never source.
+.claude/worktrees/
 # Pipeline resume state (gpu/run_scene.py). Machine-specific paths and transient
 # by nature -- the measurements themselves go to docs/RESULTS.md and the
 # committed docs/results/*.json artifacts, not here.
