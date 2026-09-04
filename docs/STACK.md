@@ -91,19 +91,23 @@ On-disk layout, `web/src/lib/encryption.ts`:
 
 ```
 MAGIC(8) | IV(12) | TAG(16) | ciphertext
-"RECONAG1"
+"RECONAG2" (AAD bound to storageKey)
 ```
 
 The magic prefix is what makes the rollout reversible in both directions: a reader can tell an
 encrypted file from a plaintext one, so encryption can be switched on for a deployment that already
-has assets on disk with no migration, no schema change, and no field in `docs/API.md`.
+has assets on disk with no migration, no schema change, and no field in `docs/API.md`. Format v2
+(`RECONAG2`) binds AES-GCM Associated Authenticated Data (AAD) to the `storageKey`, preventing
+cross-asset ciphertext substitution under the same key. Legacy `RECONAG1` assets remain decryptable.
+Turning encryption off (`ASSET_ENCRYPTION=off`) still reads existing encrypted files back cleanly,
+provided `ASSET_ENCRYPTION_KEY` remains in `.env`.
 
 ### What an attacker actually gets
 
 | Attacker has | Can read | Cannot read |
 |---|---|---|
 | Database only | Metadata: filenames, plaintext sizes, SHA-256 of plaintext, case/scene structure, the whole audit chain | **No byte of any video or reconstruction** |
-| Filesystem only | Ciphertext, and file sizes | Nothing useful without the key |
+| Filesystem only | Ciphertext, and file sizes | Nothing useful without the key; cannot substitute ciphertexts across assets without breaking GCM auth |
 | Database **and** the key | Everything | — |
 | Provider disk encryption alone | (this is option 1, which we did *not* rely on) | — |
 
@@ -126,7 +130,8 @@ length; the file on disk is 36 bytes larger.
   but that is a reason to scope the claim, not to claim both.
 - **Off by default in code.** An existing checkout keeps working; `.env.example` ships `on`, so a
   fresh setup gets it. A missing or malformed key throws rather than silently writing plaintext,
-  because "encryption was enabled and quietly did nothing" is the worst available outcome.
+  because "encryption was enabled and quietly did nothing" is the worst available outcome. Turning
+  encryption off still reads existing encrypted assets back, as long as the key is not deleted from `.env`.
 
 ## GPU track, as installed 2026-08-23 (Legion, RTX 4060 Laptop, 8 GB)
 

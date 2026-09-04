@@ -41,7 +41,9 @@ import {
  * outcome available here.
  */
 
-const MAGIC = Buffer.from('RECONAG1', 'ascii') // RECON AES-GCM, format v1
+const MAGIC_V1 = Buffer.from('RECONAG1', 'ascii') // RECON AES-GCM, format v1 (no AAD)
+const MAGIC_V2 = Buffer.from('RECONAG2', 'ascii') // RECON AES-GCM, format v2 (with AAD bound to storageKey)
+const MAGIC = MAGIC_V2
 const IV_LEN = 12 // 96 bits, the size GCM is specified for
 const TAG_LEN = 16
 export const HEADER_LEN = MAGIC.length + IV_LEN + TAG_LEN // 36
@@ -89,23 +91,45 @@ export function loadKey(raw: string | undefined = process.env.ASSET_ENCRYPTION_K
 /** Does this file start with our magic? Safe on a short buffer. */
 export function isEncrypted(head: Buffer): boolean {
   if (head.length < MAGIC.length) return false
-  // timingSafeEqual needs equal lengths; compare the prefix slice.
-  return timingSafeEqual(head.subarray(0, MAGIC.length), MAGIC)
+  const p = head.subarray(0, MAGIC.length)
+  return timingSafeEqual(p, MAGIC_V1) || timingSafeEqual(p, MAGIC_V2)
 }
 
-export function encryptBuffer(plain: Buffer, key: Buffer = loadKey()): Buffer {
-  if (key.length !== KEY_LEN) {
-    throw new EncryptionError(`key must be ${KEY_LEN} bytes, got ${key.length}`)
+export function encryptBuffer(
+  plain: Buffer,
+  storageKeyOrKey?: string | Buffer,
+  key?: Buffer
+): Buffer {
+  let storageKey: string | undefined
+  let actualKey: Buffer
+  if (Buffer.isBuffer(storageKeyOrKey)) {
+    actualKey = storageKeyOrKey
+    storageKey = undefined
+  } else {
+    storageKey = storageKeyOrKey
+    actualKey = key ?? loadKey()
+  }
+
+  if (actualKey.length !== KEY_LEN) {
+    throw new EncryptionError(`key must be ${KEY_LEN} bytes, got ${actualKey.length}`)
   }
   // A fresh random IV per file. Reusing an IV under the same key is the one
   // catastrophic misuse of GCM, so it is never derived from anything.
   const iv = randomBytes(IV_LEN)
-  const cipher = createCipheriv('aes-256-gcm', key, iv)
+  const cipher = createCipheriv('aes-256-gcm', actualKey, iv)
+  if (storageKey) {
+    cipher.setAAD(Buffer.from(storageKey, 'utf8'))
+  }
   const enc = Buffer.concat([cipher.update(plain), cipher.final()])
-  return Buffer.concat([MAGIC, iv, cipher.getAuthTag(), enc])
+  const magic = storageKey ? MAGIC_V2 : MAGIC_V1
+  return Buffer.concat([magic, iv, cipher.getAuthTag(), enc])
 }
 
-export function decryptBuffer(stored: Buffer, key: Buffer = loadKey()): Buffer {
+export function decryptBuffer(
+  stored: Buffer,
+  storageKeyOrKey?: string | Buffer,
+  key?: Buffer
+): Buffer {
   if (!isEncrypted(stored)) {
     throw new EncryptionError('not a RECON encrypted asset (magic prefix missing)')
   }
@@ -114,10 +138,24 @@ export function decryptBuffer(stored: Buffer, key: Buffer = loadKey()): Buffer {
       `truncated encrypted asset: ${stored.length} bytes, header alone is ${HEADER_LEN}`
     )
   }
+  let storageKey: string | undefined
+  let actualKey: Buffer
+  if (Buffer.isBuffer(storageKeyOrKey)) {
+    actualKey = storageKeyOrKey
+    storageKey = undefined
+  } else {
+    storageKey = storageKeyOrKey
+    actualKey = key ?? loadKey()
+  }
+
+  const magic = stored.subarray(0, MAGIC.length)
   const iv = stored.subarray(MAGIC.length, MAGIC.length + IV_LEN)
   const tag = stored.subarray(MAGIC.length + IV_LEN, HEADER_LEN)
-  const decipher = createDecipheriv('aes-256-gcm', key, iv)
+  const decipher = createDecipheriv('aes-256-gcm', actualKey, iv)
   decipher.setAuthTag(tag)
+  if (timingSafeEqual(magic, MAGIC_V2) && storageKey) {
+    decipher.setAAD(Buffer.from(storageKey, 'utf8'))
+  }
   try {
     return Buffer.concat([
       decipher.update(stored.subarray(HEADER_LEN)),
@@ -125,7 +163,7 @@ export function decryptBuffer(stored: Buffer, key: Buffer = loadKey()): Buffer {
     ])
   } catch {
     // GCM's tag check failing means the bytes are not what we wrote: a wrong
-    // key, or tampering. Callers treat this as a custody event, not a 500.
+    // key, tampering, or asset substitution. Callers treat this as a custody event, not a 500.
     throw new EncryptionError(
       'asset failed authentication: wrong key, or the stored bytes were modified'
     )
@@ -133,7 +171,7 @@ export function decryptBuffer(stored: Buffer, key: Buffer = loadKey()): Buffer {
 }
 
 /** Split a header for streaming decryption. Exported for the storage layer. */
-export function parseHeader(head: Buffer): { iv: Buffer; tag: Buffer } {
+export function parseHeader(head: Buffer): { iv: Buffer; tag: Buffer; magic: Buffer } {
   if (!isEncrypted(head)) {
     throw new EncryptionError('not a RECON encrypted asset (magic prefix missing)')
   }
@@ -141,6 +179,7 @@ export function parseHeader(head: Buffer): { iv: Buffer; tag: Buffer } {
     throw new EncryptionError('truncated encrypted asset header')
   }
   return {
+    magic: head.subarray(0, MAGIC.length),
     iv: head.subarray(MAGIC.length, MAGIC.length + IV_LEN),
     tag: head.subarray(MAGIC.length + IV_LEN, HEADER_LEN),
   }
@@ -160,9 +199,26 @@ export function parseHeader(head: Buffer): { iv: Buffer; tag: Buffer } {
  * Detection is therefore not weakened; only the point of detection moves from
  * the server to the consumer.
  */
-export function streamingDecipher(head: Buffer, key: Buffer = loadKey()) {
-  const { iv, tag } = parseHeader(head)
-  const decipher = createDecipheriv('aes-256-gcm', key, iv)
+export function streamingDecipher(
+  head: Buffer,
+  storageKeyOrKey?: string | Buffer,
+  key?: Buffer
+) {
+  let storageKey: string | undefined
+  let actualKey: Buffer
+  if (Buffer.isBuffer(storageKeyOrKey)) {
+    actualKey = storageKeyOrKey
+    storageKey = undefined
+  } else {
+    storageKey = storageKeyOrKey
+    actualKey = key ?? loadKey()
+  }
+
+  const { iv, tag, magic } = parseHeader(head)
+  const decipher = createDecipheriv('aes-256-gcm', actualKey, iv)
   decipher.setAuthTag(tag)
+  if (timingSafeEqual(magic, MAGIC_V2) && storageKey) {
+    decipher.setAAD(Buffer.from(storageKey, 'utf8'))
+  }
   return decipher
 }

@@ -56,6 +56,17 @@ check('stored file is recognised as encrypted', isEncrypted(enc))
 check('plaintext is not mistaken for encrypted', !isEncrypted(plain))
 check('an empty buffer round trips', decryptBuffer(encryptBuffer(Buffer.alloc(0), key), key).length === 0)
 
+// AAD binding test: encrypting for key A and decrypting with key B fails!
+const encA = encryptBuffer(plain, 'scenes/1/video.mp4', key)
+check(
+  'decrypting with matching storageKey succeeds',
+  decryptBuffer(encA, 'scenes/1/video.mp4', key).equals(plain)
+)
+check(
+  'substituting ciphertext under a different storageKey fails authentication',
+  threw(() => decryptBuffer(encA, 'scenes/2/video.mp4', key))
+)
+
 // A .ply-sized payload, because GCM is a stream cipher underneath and a
 // multi-block input is the realistic case.
 const big = randomBytes(1 << 20)

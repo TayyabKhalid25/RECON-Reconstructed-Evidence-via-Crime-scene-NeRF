@@ -72,7 +72,7 @@ export function assetKey(sceneId: string, filename: string): string {
 export async function writeAsset(storageKey: string, data: Buffer): Promise<void> {
   const abs = resolveKey(storageKey)
   await mkdir(path.dirname(abs), { recursive: true })
-  await writeFile(abs, encryptionEnabled() ? encryptBuffer(data) : data)
+  await writeFile(abs, encryptionEnabled() ? encryptBuffer(data, storageKey) : data)
 }
 
 export async function assetExists(storageKey: string): Promise<boolean> {
@@ -137,7 +137,8 @@ export async function assetStream(
   }
   // Skip the header: it is framing, not ciphertext.
   const body = createReadStream(abs, { start: HEADER_LEN })
-  const plain = body.pipe(streamingDecipher(head))
+  const plain = body.pipe(streamingDecipher(head, storageKey))
+  body.on('error', (err) => plain.destroy(err))
   return Readable.toWeb(plain) as ReadableStream<Uint8Array>
 }
 
