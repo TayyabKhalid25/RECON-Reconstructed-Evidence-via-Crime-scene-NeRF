@@ -11,6 +11,44 @@ table from memory in November is impossible, and Chapter 7's test cases are fill
 | 2026-08-26 | 1 (VRAM probe) | legion | 304 | 100% | 7000 | 2.3 | **1197** | - | - | - | 180137 | - | Rerun of scene 1 purely to measure VRAM, sampled every 0.5 s. Peak 1197 of 8188 MiB = 14.6%. Max 74 C, 75 W, 2700 MHz, no throttling. Peak host RAM 2.4 GB. Started on battery, switched to mains mid-run: timing indicative, VRAM valid |
 | 2026-08-26 | 2 | legion | 316 | 100% | 7000 | 2.1 | **1441** | 30.13 | 0.946 | 0.118 | 251879 | - | Second capture through CAPTURE.md + PRESET.md, no OOM. 4K60 **portrait**. unitScale 0.313341 via marker, spread 1.86% (marker larger in frame than scene 1). Peak 1441 of 8188 MiB = 17.6%. Mains power throughout |
 
+### The pipeline reproduces a scene from cold, 2026-09-02
+
+FTW-37's done-when was "one command takes a video path and produces a Unity-convention ply plus a
+complete metadata.json, and re-running it on scene 1 reproduces the recorded numbers". This is that
+check, run against **scene 2's original video from scratch** — new COLMAP, new training, nothing
+reused — as `2cold`:
+
+| | Cold run via `gpu/run_scene.py` | Recorded 2026-08-26 |
+|---|---|---|
+| Frames registered | 316 / 316 = **100 %** | 316 / 100 % |
+| Wall clock (train) | 2.4 min | 2 min 07 s |
+| **Peak VRAM** | **1349 MiB** | 1441 MiB |
+| PSNR | **30.26** | 30.13 |
+| SSIM | **0.946** | 0.946 |
+| LPIPS | 0.117 | 0.118 |
+| unitScale | **0.312834** | 0.313341 |
+| Marker detected in | 151 frames | 151 frames |
+| unitScale spread | **1.870 %** | 1.86 % |
+| Splats | 258 157 | 251 879 |
+
+**The pipeline is reproducible.** unitScale agrees to 4 decimal places (0.312834 against 0.313341,
+0.16 % apart) and the marker was found in exactly the same 151 frames, which is the number that
+matters most since every measurement depends on it. PSNR, SSIM and LPIPS land within run-to-run
+variance, and splat count differs by 2.5 % — both expected, because splatfacto's densification is
+stochastic and nothing here is seeded. Peak VRAM came in 92 MiB *lower* than the original run.
+
+The output `metadata.json` is complete: every field `docs/samples/metadata.example.json` declares
+is present and non-null, **including `training.peakVramMb`**, which first light lost because nobody
+was sampling while the process was alive. Artifacts:
+`docs/results/2026-09-02-scene2cold-{eval,unitscale,metadata}.json`.
+
+Two things this run established beyond the numbers. **Resume works**: the run died at stage 10 of 11
+and `--from metadata` completed it from persisted state without recomputing COLMAP or training.
+And it found a real bug — `bounding_box()` imported another tool's PLY reader through a `sys.path`
+hack, so when that file left the working tree the pipeline died at stage 10 after twelve minutes of
+GPU work. Now self-contained. The lesson recorded for anyone running long jobs here: **do not
+switch git branches while a pipeline is running against the working tree.**
+
 ### Scene 2: the preset validated on a second capture
 
 FTW-26 required a second capture through the protocol and preset without OOM. `20260825_161856.mp4`
@@ -82,6 +120,53 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 | Date | Phone | Splat count | FPS | Notes |
 |---|---|---|---|---|
 | | | | | |
+
+**Still empty, and it is the most important empty table in this file.** Nothing has yet rendered
+on a phone, so the mobile splat budget remains provisional and FTW-38 stays blocked on the
+measurement. What we do know as of 2026-09-02 is a negative result from Track C (PR #14): the
+stock `aras-p/UnityGaussianSplatting` declares HLSL wave intrinsics (`wavebasic`, `waveballot`)
+at file scope in `SplatUtilities.compute`, which fail to compile on Mali/Adreno and take all 19
+kernels down with them. `gsplat-unity` isolates wave pragmas to its sort kernels, while
+`arloopa/UnitySplats` provides an async-CPU sort fallback for OpenGL ES 3.1. So the FPS figure is
+blocked on evaluating these alternative renderers, not on a capture. Full audit in
+`docs/MOBILE-SPLAT-OPTIONS.md`.
+
+### Export decimation, measured 2026-09-02 (legion)
+
+`tools/decimate_splats.py` on `exports/1/splat_unity.ply` (scene 1, 178 333 splats, 62 properties).
+Spherical-harmonic truncation is the first lever because it is the only one that costs no geometry.
+
+| Keep | Properties | Size | Shrink | mean dC | p99 dC | max dC | Splats lost |
+|---|---|---|---|---|---|---|---|
+| degree 3 (as exported) | 62 | 44.23 MB | 1.00x | - | - | - | - |
+| degree 2 | 41 | 29.25 MB | 1.51x | 2.4 / 255 | 12.8 / 255 | 68 / 255 | **none** |
+| degree 1 | 26 | 18.55 MB | 2.38x | 3.2 / 255 | 16.4 / 255 | 77 / 255 | **none** |
+| **degree 0** | **17** | **12.13 MB** | **3.65x** | **3.9 / 255** | **19.2 / 255** | **87 / 255** | **none** |
+
+dC is absolute radiance error against full degree-3 SH, evaluated over 400 random view directions
+on a 20 000-splat sample, in sRGB levels out of 255. Regenerate with
+`python tools/decimate_splats.py exports/1/splat_unity.ply --sh-report`.
+
+The 45 `f_rest_*` floats are 72.6 percent of the file and carry a mean absolute coefficient of
+0.014 against the base colour's 0.514. Dropping all of them leaves every splat's position, scale,
+rotation, opacity and base colour **bit-identical** — verified by column comparison, with the
+bounding box unchanged at 9.28 x 7.03 x 8.81 m. **unitScale 0.369573 and every measurement derived
+from it therefore survive SH truncation untouched**, which is what makes this lever safe to pull
+before the accuracy work in FTW-36 is finished.
+
+Read the three columns honestly rather than quoting only the mean. A mean error of 3.9 levels is
+below what a viewer notices across a room, but p99 is 19 levels and the worst splats shift 87. The
+large excursions are specular highlights on glass and gloss, which is where view-dependent colour
+was doing real work. For a forensic scene the geometry is the evidence and the gloss is not, so
+degree 0 is defensible; it should still be stated as a trade, not as a free win.
+
+An opacity **threshold** is not a useful lever on our exports: splatfacto has already pruned at
+`cull-alpha-thresh 0.1`, so only 1.32 percent of scene 1's splats sit below sigmoid opacity 0.1 and
+0.02 percent below 0.01. Cutting splat *count* therefore has to rank by contribution
+(opacity x cross-section), and it costs geometry, so it waits for a device measurement per FTW-38.
+
+For illustration only, not a calibrated budget: degree 0 plus a 100 000-splat cap gives 6.80 MB,
+a 6.50x reduction, dropping 43.9 percent of splats.
 
 ## Scale checks
 
