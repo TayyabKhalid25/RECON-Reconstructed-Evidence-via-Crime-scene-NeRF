@@ -30,7 +30,7 @@ async function findViewableScene(id: string, session: { sub: string; role: strin
 }
 
 export const POST = withErrors(
-  async (req: Request, ctx: RouteContext<'/api/scenes/[id]/anchor'>) => {
+  async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     const session = await sessionFromRequest(req)
     if (!session) return apiError('UNAUTHORIZED', 'Missing or invalid session token')
 
@@ -70,7 +70,7 @@ export const POST = withErrors(
 )
 
 export const GET = withErrors(
-  async (req: Request, ctx: RouteContext<'/api/scenes/[id]/anchor'>) => {
+  async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     const session = await sessionFromRequest(req)
     if (!session) return apiError('UNAUTHORIZED', 'Missing or invalid session token')
 
