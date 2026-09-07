@@ -16,7 +16,8 @@
     "worker:throwaway": "tsx scripts/throwaway-worker.ts",
     "check:custody": "tsx scripts/check-custody.ts",
     "check:anchor": "tsx scripts/check-anchor.ts",
-    "verify": "npm run typecheck && npm run lint && npm run check:custody && npm run check:anchor"
+    "check:encryption": "tsx scripts/check-encryption.ts",
+    "verify": "npm run typecheck && npm run lint && npm run check:custody && npm run check:anchor && npm run check:encryption"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
