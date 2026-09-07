@@ -19,6 +19,8 @@ that breaks one track in November is a self inflicted wound.
 | PyTorch | matched to the CUDA toolkit | 2.7.1+cu126 (torchvision 0.22.1+cu126) | W |
 | COLMAP | 3.x | 3.13.0, conda-forge build `cuda_126h5ca8012_3` | W |
 | Nerfstudio (splatfacto) | current stable | 1.1.5 (gsplat 1.4.0, kernels JIT-built for sm_89) | W |
+| Open3D | current stable | 0.19.0 (Miniforge env `recon`) | W |
+| scikit-image | current stable | 0.26.0 (Miniforge env `recon`) | W |
 | Unity | 6 LTS with URP | 6000.3.22f1 | T |
 | URP | 17.x | 17.3.0 | T |
 | AR Foundation | 6.x | 6.6.1 | T |

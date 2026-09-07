@@ -1,0 +1,60 @@
+{
+  "input": "exports/1/splat_unity.ply",
+  "output": "outputs/scene1_mesh.ply",
+  "method": "poisson",
+  "splatsIn": 178333,
+  "splatsKept": 141522,
+  "minOpacity": 0.3,
+  "maxExtent": 0.5,
+  "trianglesBeforeDecimation": 386356,
+  "triangles": 50000,
+  "vertices": 25129,
+  "watertight": false,
+  "splatBBox": {
+    "min": [
+      -12.420687675476074,
+      -14.71147632598877,
+      -10.472831726074219
+    ],
+    "max": [
+      12.327584266662598,
+      0.7855955958366394,
+      13.037432670593262
+    ]
+  },
+  "meshBBox": {
+    "min": [
+      -10.98388385772705,
+      -10.26548957824707,
+      -8.365781784057617
+    ],
+    "max": [
+      8.620831102293515,
+      0.6878261566162109,
+      11.386954307556152
+    ]
+  },
+  "vertexToSplatDistanceSceneUnits": {
+    "mean": 0.13285669554018942,
+    "median": 0.10514437241858544,
+    "p95": 0.3340348019355493,
+    "max": 0.7455310592263461
+  },
+  "coveragePerAxis": [
+    0.7921650047266445,
+    0.7067990514670777,
+    0.8401749873307962
+  ],
+  "cleanup": {
+    "clustersTotal": 1091,
+    "clustersRemoved": 1044,
+    "trianglesRemovedAsNoise": 12187
+  },
+  "units": "scene units, apply unitScale from metadata.json",
+  "frame": {
+    "handedness": "left",
+    "upAxis": "y"
+  },
+  "depth": 9,
+  "densityQuantile": 0.05
+}
