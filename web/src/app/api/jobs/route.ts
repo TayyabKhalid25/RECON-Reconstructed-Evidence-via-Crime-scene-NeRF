@@ -9,6 +9,7 @@ import { sessionFromRequest } from '@/lib/auth'
 
 const CreateJob = z.object({
   sceneId: z.string().min(1),
+  quality: z.enum(['FAST', 'HIGH', 'MAX']).optional().default('FAST'),
 })
 
 export const POST = withErrors(async (req: Request) => {
@@ -48,8 +49,8 @@ export const POST = withErrors(async (req: Request) => {
   // custody entry for a job that does not exist, are both worse than failing.
   const job = await prisma.$transaction(async (tx) => {
     const created = await tx.job.create({
-      data: { sceneId: scene.id, status: 'PENDING' },
-      select: { id: true },
+      data: { sceneId: scene.id, status: 'PENDING', quality: parsed.data.quality },
+      select: { id: true, quality: true },
     })
     await appendAudit(
       { userId: session.sub, action: 'job.create', targetType: 'Job', targetId: created.id },
@@ -64,6 +65,7 @@ export const POST = withErrors(async (req: Request) => {
     jobId: job.id,
     sceneId: scene.id,
     sourceKey: sourceAsset.storageKey,
+    quality: job.quality,
   })
 
   return apiOk({ jobId: job.id }, 201)

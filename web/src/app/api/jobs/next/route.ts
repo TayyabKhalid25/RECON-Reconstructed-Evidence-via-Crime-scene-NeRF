@@ -28,7 +28,7 @@ export const GET = withErrors(async (req: Request) => {
   // atomic or two of them train the same scene: SKIP LOCKED lets each caller
   // take a different row instead of blocking on the same one.
   const claimed = await prisma.$queryRaw<
-    { id: string; sceneId: string }[]
+    { id: string; sceneId: string; quality: string }[]
   >`
     UPDATE "Job"
        SET status = 'PROCESSING',
@@ -41,7 +41,7 @@ export const GET = withErrors(async (req: Request) => {
         FOR UPDATE SKIP LOCKED
         LIMIT 1
      )
-    RETURNING id, "sceneId"
+    RETURNING id, "sceneId", "quality"
   `
 
   if (claimed.length === 0) {
@@ -70,6 +70,7 @@ export const GET = withErrors(async (req: Request) => {
       sceneId: job.sceneId,
       sourceKey: sourceAsset?.storageKey ?? null,
       sourceSha256: sourceAsset?.sha256 ?? null,
+      quality: job.quality,
     },
   })
 })

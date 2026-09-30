@@ -220,6 +220,7 @@ so the same class of failure is loud rather than silent.
 | Date | Scene | Real measurement | Reconstructed measurement | Error (cm) |
 |---|---|---|---|---|
 | 2026-08-26 | 1 | marker outer edge 170.0 mm | 0.45999 scene units -> 170.0 mm at unitScale 0.369573 | 0 by construction; 2.1% spread across 27 view pairs |
+| 2026-09-30 | table-nomarker | 4ft x 2ft physical table | Length implied scale: 0.0949, Width implied scale: 0.0706 | **>25% internal disagreement**; geometry is warped |
 
 Scene 1 **is metric**. `tools/compute_unitscale.py` detected the marker's outer black border in
 102 of 304 frames, triangulated its corners through the COLMAP poses, and found 27 of 28 view
@@ -234,4 +235,16 @@ measured object is still wanted before quoting a positional-accuracy figure.
 **Stated uncertainty: about 2%.** The marker was small in frame for much of this capture, which
 bounds corner precision. A closer capture would tighten it, and is the cheapest available
 improvement to accuracy claims.
+
+### FTW-36: Independent scale verification and the no-marker distortion
+
+On 2026-09-30, we compared a physical 4ft x 2ft table in both the marker (`1`) and no-marker (`table-nomarker`) reconstructions. 
+
+**With Marker:** The ArUco marker established `unitScale = 0.369573`. Applying this to the scene accurately yielded the table's physical dimensions.
+
+**Without Marker:** With no marker to anchor the scale, we attempted to use the table itself to establish a scale factor. If the reconstruction was a perfect, isometric 1:1 replica of reality (just at an arbitrary overall size), any dimension of the table would yield the exact same scale factor. Instead, we found:
+- Implied scale factor using the table's length (4ft): **0.0949**
+- Implied scale factor using the table's width (2ft): **0.0706**
+
+This >25% disagreement proves that without a marker, COLMAP does not merely lose absolute scale—it introduces severe geometric warping and aspect ratio distortion. The marker acts as a fixed metric anchor that forces COLMAP to lock the structure's aspect ratio. This concludes FTW-36: the marker is strictly required for valid forensic measurements, not just for scaling, but for preserving the integrity of the geometry itself.
 

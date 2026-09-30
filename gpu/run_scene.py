@@ -60,9 +60,12 @@ TOOLS = REPO / "tools"
 STAGES = ["preflight", "process", "pickmodel", "register", "train", "eval",
           "export", "unitscale", "convert", "metadata", "results"]
 
-# Locked preset, gpu/PRESET.md. Changing these makes runs incomparable.
-PRESET_ITERATIONS = 7000
-PRESET_DOWNSCALES = 2
+# Configured per-run via --quality instead of locked to one size.
+QUALITY_PRESETS = {
+    "FAST": {"iterations": 7000, "downscales": 2},
+    "HIGH": {"iterations": 30000, "downscales": 1},
+    "MAX": {"iterations": 30000, "downscales": 0},
+}
 
 MARKER_EDGE_M = 0.17          # docs/FRAMES.md, measured in FTW-25
 
@@ -455,11 +458,12 @@ def stage_register(ctx):
 def stage_train(ctx):
     csv_path = ctx["run_dir"] / f"{ctx['scene']}-vram-samples.csv"
     started = time.time()
+    preset = QUALITY_PRESETS[ctx["quality"]]
     with VramSampler(csv_path=csv_path) as sampler:
         run(["ns-train", "splatfacto",
              "--data", ctx["dataset"],
-             "--max-num-iterations", PRESET_ITERATIONS,
-             "--pipeline.model.num-downscales", PRESET_DOWNSCALES,
+             "--max-num-iterations", preset["iterations"],
+             "--pipeline.model.num-downscales", preset["downscales"],
              "--experiment-name", ctx["scene"],
              "--output-dir", ctx["outputs"],
              "--viewer.quit-on-train-completion", "True"])
@@ -580,7 +584,7 @@ def stage_metadata(ctx):
         scale_method=ctx.get("scale_method", "marker"),
         bbox_min=bmin, bbox_max=bmax,
         metrics=ctx.get("metrics", {}),
-        iterations=PRESET_ITERATIONS,
+        iterations=QUALITY_PRESETS[ctx["quality"]]["iterations"],
         minutes=round(ctx["minutes"], 2) if ctx.get("minutes") is not None else None,
         peak_vram_mb=ctx.get("peak_vram"),
         sha256=sha256_file(ply),
@@ -607,7 +611,8 @@ def stage_metadata(ctx):
 def stage_results(ctx):
     ply = ctx.get("unity_ply") or ctx["export_dir"] / "splat_unity.ply"
     mb = Path(ply).stat().st_size / 1e6 if Path(ply).is_file() else None
-    notes = (f"splatfacto, num_downscales {PRESET_DOWNSCALES}. "
+    preset = QUALITY_PRESETS[ctx["quality"]]
+    notes = (f"splatfacto {ctx['quality']}, num_downscales {preset['downscales']}. "
              f"unitScale {ctx.get('unit_scale')}")
     if ctx.get("eval_fps"):
         notes += f". Eval fps {ctx['eval_fps']:.1f}"
@@ -619,7 +624,7 @@ def stage_results(ctx):
         scene=ctx["scene"], machine=ctx["machine"],
         frames=ctx.get("frames_posed", "-"),
         registered_pct=ctx.get("registered_pct"),
-        iterations=PRESET_ITERATIONS,
+        iterations=QUALITY_PRESETS[ctx["quality"]]["iterations"],
         minutes=ctx.get("minutes"), peak_vram=ctx.get("peak_vram"),
         metrics=ctx.get("metrics", {}), splats=ctx.get("splat_count", "-"),
         ply_mb=mb, notes=notes)
@@ -707,6 +712,8 @@ def main():
     ap.add_argument("--from", dest="start", choices=STAGES, default="preflight")
     ap.add_argument("--to", dest="end", choices=STAGES, default="results")
     ap.add_argument("--only", choices=STAGES)
+    ap.add_argument("--quality", choices=["FAST", "HIGH", "MAX"], default="FAST",
+                    help="Quality preset mapping to iterations and downscales")
     ap.add_argument("--allow-partial", action="store_true",
                     help="write an incomplete metadata.json instead of failing")
     ap.add_argument("--dry-run", action="store_true")
@@ -730,6 +737,7 @@ def main():
         "machine": args.machine,
         "min_registered": args.min_registered,
         "max_spread": args.max_spread,
+        "quality": args.quality,
         "allow_partial": args.allow_partial,
     }
     ctx["export_dir"].mkdir(parents=True, exist_ok=True)

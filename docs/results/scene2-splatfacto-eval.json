@@ -1,0 +1,17 @@
+{
+  "experiment_name": "scene2",
+  "method_name": "splatfacto",
+  "checkpoint": "/home/wahaj/RECON-Reconstructed-Evidence-via-Crime-scene-NeRF/outputs/scene2/splatfacto/2026-09-30_132046/nerfstudio_models/step-000029999.ckpt",
+  "results": {
+    "psnr": 18.84911346435547,
+    "psnr_std": 5.710201740264893,
+    "ssim": 0.7945019602775574,
+    "ssim_std": 0.1199476569890976,
+    "lpips": 0.4098440706729889,
+    "lpips_std": 0.19036492705345154,
+    "num_rays_per_sec": 31007472.0,
+    "num_rays_per_sec_std": 7784192.0,
+    "fps": 59.98725509643555,
+    "fps_std": 15.059347152709961
+  }
+}
