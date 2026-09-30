@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce0eaa90dbf24670a230447dc3ec09f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Gsplat::Gsplat.GsplatRenderer
-  GsplatAsset: {fileID: 4599839170941234424, guid: 271c4dc1e9ffaea46b7525b617a231ee, type: 3}
+  GsplatAsset: {fileID: 4599839170941234424, guid: 796e8f4885f8a614e9ec1812603cd7a6, type: 3}
   SHDegree: 3
   RenderOrder: 0
   Brightness: 1
@@ -164,7 +164,7 @@ MonoBehaviour:
   SortMode: 0
   SortRefreshRate: 1
   CutoutsRefreshRate: 1
-  m_assetGuid: 271c4dc1e9ffaea46b7525b617a231ee
+  m_assetGuid: 796e8f4885f8a614e9ec1812603cd7a6
 --- !u!4 &163907819
 Transform:
   m_ObjectHideFlags: 0

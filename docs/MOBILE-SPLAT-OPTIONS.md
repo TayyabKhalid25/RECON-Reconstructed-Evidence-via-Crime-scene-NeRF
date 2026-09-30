@@ -4,6 +4,9 @@ Written 2026-09-02 (Wahaj) after PR #14 established that the stock renderer does
 mobile. Purpose: cost the alternatives *before* days go into shader work, and say exactly what
 deviating costs each track. Track C owns the decision; this is input to it, not a decision taken.
 
+> **Decision Update (2026-09-30, Tayyab):** Track C selected **Option 1 (`arloopa/UnitySplats`)**,
+> resolving FTW-44 without a custom shader fork. Pinned in `docs/STACK.md`.
+
 Deadline pressure to be honest about: integration gate **I1 is 6 Sep** (a `.ply` renders on
 Tayyab's phone, file moved by hand), and the proposal defence is **18 Sep**.
 

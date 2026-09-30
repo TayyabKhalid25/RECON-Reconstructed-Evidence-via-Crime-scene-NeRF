@@ -27,11 +27,33 @@ that breaks one track in November is a self inflicted wound.
 | ARCore / ARKit | 6.5.x | 6.5.0 | T |
 | XR Management | 4.6.x | 4.6.0 | T |
 | Android Build Tools | Unity default | OpenJDK 17, Android SDK 34 | T |
-| Splat renderer | aras-p/UnityGaussianSplatting | Git hash 2c6fed3 (will be embedded and modified for mobile) | T |
+| Splat renderer | arloopa/UnitySplats | git URL https://github.com/arloopa/UnitySplats.git | T |
 | Physics | PhysX, bundled with Unity | | T |
 
 Rule for the GPU track: no bleeding edge Python. Torch and CUDA wheels lag new Python releases
 by months. Use the version the reconstruction toolchain's own install docs specify.
+
+## UnitySplats, adopted 2026-09-30 (FTW-44)
+
+The proposal and initial Track C plan pinned `aras-p/UnityGaussianSplatting`. However, audit of
+`aras-p`'s compute shaders confirmed that all 19 kernels reside in `SplatUtilities.compute` behind
+`#pragma require wavebasic` / `waveballot` / `#pragma use_dxc`. On mobile GPUs lacking hardware wave
+intrinsics (e.g. Mali, many Adreno configurations), the entire shader file fails compilation, killing
+splat rendering entirely.
+
+Rather than undertaking high-risk shader refactoring and maintaining a bespoke bitonic sort fork
+(estimated at weeks of effort with high risk of exceeding workgroup bounds), Track C adopted
+**`arloopa/UnitySplats`** (Option 1 in `docs/MOBILE-SPLAT-OPTIONS.md`).
+
+`arloopa/UnitySplats`:
+- Tested across Android (Vulkan and OpenGL ES 3.1) and Meta Quest 3/3S headsets.
+- Features GPU radix sort on Vulkan with an automatic asynchronous CPU radix sort fallback on backends
+  where wave intrinsics are unavailable (`Runtime/GsplatSorter.cs`).
+- Directly imports `.ply` files and supports runtime loading from the RECON backend without custom
+  editor-only bake steps.
+- Embedded via Unity Package Manager dependency:
+  `"com.arloopa.unitysplats": "https://github.com/arloopa/UnitySplats.git"`.
+
 
 ## SWR, added 2026-09-02
 

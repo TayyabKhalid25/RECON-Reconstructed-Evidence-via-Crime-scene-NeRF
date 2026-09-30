@@ -13,7 +13,7 @@ the agent reads and follows that skill before improvising.
 | [building-the-web-backend](.claude/skills/building-the-web-backend/SKILL.md) | Route handlers, Prisma, JWT and RBAC, validation. Prisma singleton, uniform error shape, per-route authorization |
 | [building-the-gpu-worker](.claude/skills/building-the-gpu-worker/SKILL.md) | The Python worker around COLMAP and splatfacto: stage runner with timeouts, error taxonomy, VRAM sampling, idempotent retries |
 | [building-dashboard-ui](.claude/skills/building-dashboard-ui/SKILL.md) | Case lists, upload flow, live job status. Gentle polling, four designed states per view, real upload progress |
-| [rendering-splats-in-unity](.claude/skills/rendering-splats-in-unity/SKILL.md) | UnityGaussianSplatting integration, runtime .ply loading (the week-1 risk), marker alignment tree, mobile FPS knobs |
+| [rendering-splats-in-unity](.claude/skills/rendering-splats-in-unity/SKILL.md) | UnitySplats integration, runtime .ply loading (the week-1 risk), marker alignment tree, mobile FPS knobs |
 | [simulating-ballistics-and-spatter](.claude/skills/simulating-ballistics-and-spatter/SKILL.md) | Substepped swept-raycast ballistics with the free parabola test, BPA sin-alpha ellipse spatter code |
 | [implementing-custody-and-encryption](.claude/skills/implementing-custody-and-encryption/SKILL.md) | Hash-chained audit log (canonical serialization, serialized appends), streaming SHA-256, AES-256-GCM at rest |
 
