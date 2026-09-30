@@ -44,15 +44,16 @@ namespace RECON.Performance
                 onePercentLowFps = 1.0f / (onePercentLowTime > 0 ? onePercentLowTime : 0.01f);
             }
 
-            // Battery - SystemInfo returns -1 if the device doesn't support battery level reading
             float batteryPct = SystemInfo.batteryLevel * 100f;
             string batteryStatus = SystemInfo.batteryStatus.ToString();
             
             long systemRam = SystemInfo.systemMemorySize;
             long graphicsRam = SystemInfo.graphicsMemorySize;
 
-            string text = string.Format("FPS: {0:0.} (1% Low: {1:0.})\nBattery: {2:0.0}% ({3})\nSys RAM: {4} MB\nVRAM: {5} MB", 
-                fps, onePercentLowFps, batteryPct > 0 ? batteryPct.ToString("0.0") : "N/A", batteryStatus, systemRam, graphicsRam);
+            // Thermals are not available in this Unity version natively
+            string text = string.Format("FPS: {0:0.} (1% Low: {1:0.})\nBattery: {2:0.0}% ({3})\nThermals: N/A (Use ADB)\nSys RAM: {4} MB\nVRAM: {5} MB", 
+                fps, onePercentLowFps, batteryPct > 0 ? batteryPct.ToString("0.0") : "N/A", batteryStatus, 
+                systemRam, graphicsRam);
                 
             // Drop shadow for readability against splat backgrounds
             GUIStyle shadowStyle = new GUIStyle(style);
