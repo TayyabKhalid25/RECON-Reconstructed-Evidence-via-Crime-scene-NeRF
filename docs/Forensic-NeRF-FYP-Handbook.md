@@ -203,7 +203,7 @@ Fill the right column in once, on day one, with the exact versions you install. 
 | [T] C | Editor | Unity 6 LTS, pin the exact patch `verify` | ___ |
 | [T] C | Pipeline | URP | ___ |
 | [T] C | AR | AR Foundation 6.x plus ARKit and ARCore provider packages | ___ |
-| [T] C | Splat renderer | aras-p UnityGaussianSplatting, MIT. **Verified 2026-09-02: MIT yes, but upstream does not support mobile** and will not; see `MOBILE-SPLAT-OPTIONS.md` | ___ |
+| [T] C | Splat renderer | arloopa/UnitySplats, MIT. Adopted 2026-09-30 (replaced aras-p due to mobile wave ops failure; see `STACK.md` and `MOBILE-SPLAT-OPTIONS.md`) | ___ |
 | [T] C | Anchors | Per Decision 1 | ___ |
 | [T] C | Physics | PhysX, bundled with Unity | ___ |
 
@@ -508,10 +508,10 @@ Highest risk track, because it is the one where the desktop research tooling mee
 >
 > Option 3 is a legitimate engineering answer, not a failure, as long as you say clearly what runs where and why. Decide by 9 Oct, see Section 15.
 
-> [!WARNING]
-> **UGS modifications for mobile enablement**
+> [!NOTE]
+> **Mobile splat rendering package adoption (2026-09-30)**
 >
-> The stock `aras-p/UnityGaussianSplatting` (UGS) package relies on Wave Intrinsics (e.g., `wavebasic`, `waveballot`) in its compute shaders for radix sorting. These instructions are unsupported on mobile GPUs like Adreno and Mali, causing the entire shader program to fail compilation. To enable rendering on mobile devices, the UGS codebase must be embedded locally and modified to replace the radix sort with a mobile-compatible approach, such as a Bitonic Merge Sort using global memory.
+> Stock `aras-p/UnityGaussianSplatting` (UGS) relies on Wave Intrinsics (`wavebasic`, `waveballot`) in its compute shaders for radix sorting, failing compilation on mobile GPUs (Adreno, Mali). Rather than hand-porting UGS and writing a bespoke bitonic sort, Track C adopted **`arloopa/UnitySplats`** (Option 1 in `docs/MOBILE-SPLAT-OPTIONS.md`). `UnitySplats` provides tested mobile support on Vulkan, an async CPU sort fallback (`GsplatSorter.cs`), and native runtime `.ply` loading without custom editor-only conversion steps (pinned in `docs/STACK.md`).
 ### Ballistics, the bug you will definitely hit
 
 A bullet at even 300 m/s covers 6 metres in a single 20 ms physics step. A standard rigidbody will teleport straight through a wall between steps and report no collision. This will look like your physics is broken when in fact your integration is too coarse.
