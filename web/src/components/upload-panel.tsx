@@ -21,6 +21,7 @@ export function UploadPanel({
 }) {
   const [file, setFile] = useState<File | null>(null)
   const [sceneName, setSceneName] = useState('')
+  const [quality, setQuality] = useState<'FAST' | 'HIGH' | 'MAX'>('FAST')
   const [pct, setPct] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
@@ -36,6 +37,7 @@ export function UploadPanel({
     const form = new FormData()
     form.append('video', file)
     form.append('caseId', caseId)
+    form.append('quality', quality)
     if (sceneName.trim()) form.append('sceneName', sceneName.trim())
 
     const xhr = new XMLHttpRequest()
@@ -130,6 +132,37 @@ export function UploadPanel({
           onChange={setSceneName}
           placeholder="Living room, north wall"
         />
+
+        <div className="space-y-2">
+          <span className="label">Quality Preset</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {[
+              { id: 'FAST', label: 'Fast', desc: '7K iters, 1/4 res, ~3 mins' },
+              { id: 'HIGH', label: 'High Quality', desc: '30K iters, 1/2 res, ~15 mins' },
+              { id: 'MAX', label: 'Max Quality', desc: '30K iters, full res, ~30 mins' },
+            ].map((q) => (
+              <label
+                key={q.id}
+                className={`flex flex-col p-3 border cursor-pointer transition-colors ${
+                  quality === q.id
+                    ? 'border-signal bg-signal-dim/10'
+                    : 'border-edge bg-abyss hover:border-edge-bright'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="quality"
+                  value={q.id}
+                  checked={quality === q.id}
+                  onChange={() => setQuality(q.id as any)}
+                  className="hidden"
+                />
+                <span className="font-mono text-sm uppercase text-ink-bright">{q.label}</span>
+                <span className="text-xs text-ink-faint mt-1">{q.desc}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {busy && (
           <div className="space-y-1.5">

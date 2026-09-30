@@ -16,6 +16,7 @@ class ReconstructionJob:
     job_id: str
     scene_id: str
     video_path: str
+    quality: str
 
 
 # config
@@ -76,6 +77,7 @@ def claim_job() -> ReconstructionJob | None:
                     job_id=job_data["jobId"],
                     scene_id=job_data["sceneId"],
                     video_path=str(video_path),
+                    quality=job_data.get("quality", "FAST"),
                 )
     except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
         print(f"[worker] Error claiming job: {e}")
@@ -127,6 +129,7 @@ def process_job(job: ReconstructionJob):
     print(f"[worker] Claimed Job: {job.job_id}")
     print(f"[worker] Scene: {job.scene_id}")
     print(f"[worker] Video: {job.video_path}")
+    print(f"[worker] Quality: {job.quality}")
     print("[worker] ========================================\n")
 
     video = Path(job.video_path)
@@ -151,6 +154,8 @@ def process_job(job: ReconstructionJob):
         job.scene_id,
         "--export-dir",
         str(export_dir),
+        "--quality",
+        job.quality,
     ]
 
     print("[worker] Executing reconstruction pipeline...")

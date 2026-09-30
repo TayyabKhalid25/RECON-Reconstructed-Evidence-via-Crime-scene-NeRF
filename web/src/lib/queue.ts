@@ -17,6 +17,7 @@ export type ReconstructionJobData = {
   sceneId: string
   /** Storage key of the uploaded video, resolved through src/lib/storage.ts. */
   sourceKey: string
+  quality: 'FAST' | 'HIGH' | 'MAX'
 }
 
 const globalForQueue = globalThis as unknown as {

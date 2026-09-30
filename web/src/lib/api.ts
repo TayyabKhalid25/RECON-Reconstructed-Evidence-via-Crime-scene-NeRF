@@ -1,4 +1,5 @@
 import { ZodError } from 'zod'
+import { isRateLimited } from './rate-limit'
 
 /**
  * One error shape for every route, so the Unity client and the GPU worker can
@@ -14,6 +15,7 @@ export type ApiErrorCode =
   | 'NOT_FOUND'
   | 'CONFLICT'
   | 'PAYLOAD_TOO_LARGE'
+  | 'TOO_MANY_REQUESTS'
   | 'INTERNAL'
 
 const STATUS: Record<ApiErrorCode, number> = {
@@ -23,6 +25,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,
+  TOO_MANY_REQUESTS: 429,
   INTERNAL: 500,
 }
 
@@ -52,6 +55,13 @@ export function withErrors<T extends unknown[]>(
 ): (...args: T) => Promise<Response> {
   return async (...args: T) => {
     try {
+      if (args[0] instanceof Request) {
+        const req = args[0]
+        const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'global'
+        if (await isRateLimited(ip)) {
+          return apiError('TOO_MANY_REQUESTS', 'Rate limit exceeded')
+        }
+      }
       return await handler(...args)
     } catch (err) {
       if (err instanceof ZodError) return zodError(err)

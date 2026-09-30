@@ -29,6 +29,7 @@ export const POST = withErrors(async (req: Request) => {
   const video = form.get('video')
   const caseId = form.get('caseId')
   const sceneName = form.get('sceneName')
+  const quality = form.get('quality') === 'HIGH' ? 'HIGH' : form.get('quality') === 'MAX' ? 'MAX' : 'FAST'
 
   if (!(video instanceof File)) return apiError('BAD_REQUEST', 'Missing video file field')
   if (typeof caseId !== 'string' || caseId.length === 0) {
@@ -77,8 +78,8 @@ export const POST = withErrors(async (req: Request) => {
     })
 
     const createdJob = await tx.job.create({
-      data: { sceneId: scene.id, status: 'PENDING' },
-      select: { id: true, status: true },
+      data: { sceneId: scene.id, status: 'PENDING', quality },
+      select: { id: true, status: true, quality: true },
     })
 
     await appendAudit(
@@ -95,7 +96,7 @@ export const POST = withErrors(async (req: Request) => {
 
   // After commit, so a worker cannot claim a job the transaction has not made
   // visible yet.
-  await enqueueReconstruction({ jobId: job.id, sceneId: scene.id, sourceKey: key })
+  await enqueueReconstruction({ jobId: job.id, sceneId: scene.id, sourceKey: key, quality: job.quality })
 
   return apiOk(
     { scene, job, asset: serialiseAsset(asset) },

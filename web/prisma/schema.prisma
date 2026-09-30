@@ -89,13 +89,20 @@ model Scene {
   @@index([caseId])
 }
 
+enum QualityPreset {
+  FAST
+  HIGH
+  MAX
+}
+
 model Job {
-  id        String    @id @default(cuid())
-  status    JobStatus @default(PENDING)
+  id        String        @id @default(cuid())
+  status    JobStatus     @default(PENDING)
+  quality   QualityPreset @default(FAST)
   /// Readable text when status is FAILED. The contract is explicit that a job
   /// which silently vanishes is the worst case to debug.
   error     String?
-  progress  Int       @default(0)
+  progress  Int           @default(0)
   /// Which machine claimed it. Three CUDA boxes run the same worker from week 3,
   /// and RESULTS.md rows are only meaningful with the machine recorded.
   workerName String?
