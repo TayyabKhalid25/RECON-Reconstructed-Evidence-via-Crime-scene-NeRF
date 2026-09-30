@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Gsplat::Gsplat.GsplatRenderer
   GsplatAsset: {fileID: 4599839170941234424, guid: efc0007c0ce7c2d4eaf137d4cf000b0b, type: 3}
-  SHDegree: 3
+  SHDegree: 0
   RenderOrder: 0
   Brightness: 1
   SplatDownscaleFactor: 0
@@ -398,7 +398,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RECON.Performance.SplatControllerHUD
   splats:
-  - {fileID: 0}
   - {fileID: 257234486}
 --- !u!4 &840597975
 Transform:
