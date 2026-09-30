@@ -29,7 +29,7 @@ namespace RECON.Performance
             // Position the HUD slightly lower so it doesn't overlap with standard safe areas/notches
             Rect rect = new Rect(40, 100, w, h * 2 / 100);
             style.alignment = TextAnchor.UpperLeft;
-            style.fontSize = Mathf.Max(24, h * 2 / 50); // Ensure it's readable on high DPI screens
+            style.fontSize = Mathf.Max(24, Mathf.Min(w, h) * 3 / 100); // Ensure it's readable on high DPI screens
             style.normal.textColor = Color.green;
 
             float fps = 1.0f / deltaTime;
