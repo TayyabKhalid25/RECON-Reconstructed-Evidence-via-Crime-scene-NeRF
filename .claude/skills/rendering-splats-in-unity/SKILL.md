@@ -1,6 +1,6 @@
 ---
 name: rendering-splats-in-unity
-description: Use when integrating UnityGaussianSplatting, loading scenes fetched from the API at runtime, aligning the twin to the marker in AR, or when splats render slowly on the phone or appear in the wrong place.
+description: Use when integrating UnitySplats, loading scenes fetched from the API at runtime, aligning the twin to the marker in AR, or when splats render slowly on the phone or appear in the wrong place.
 ---
 
 # Rendering splats in Unity
@@ -11,7 +11,7 @@ Two hard problems hide here, and both should be attacked in week 1, not during i
 
 ## The runtime loading problem, resolve before building anything on top
 
-`aras-p/UnityGaussianSplatting` historically converts a `.ply` into its own `GaussianSplatAsset` via an **editor** tool, which does not exist on a phone. A pipeline that serves fresh `.ply` files to a built app needs one of: `verify` against the current package version
+`arloopa/UnitySplats` replaced `aras-p/UnityGaussianSplatting` (which failed on mobile due to wave-op shader requirements). `UnitySplats` directly loads `.ply` files and features an async CPU sort fallback when GPU wave intrinsics are absent (`Runtime/GsplatSorter.cs`). A pipeline that serves fresh `.ply` files to a built app needs one of:
 
 1. **Convert on the GPU side**: Track A exports the package's runtime-loadable format (if the current version has one) instead of, or alongside, raw `.ply`.
 2. **Runtime creator**: build the splat asset at runtime from the downloaded `.ply` using the package's API from a small importer we write once.
@@ -26,7 +26,7 @@ ARTrackedImageManager (marker library, physicalSize set from the printed measure
   └─ on tracked: place SceneRoot at image pose
        SceneRoot.localScale = metadata.unitScale (assert != 0)
        assert metadata.handedness == "left" && metadata.upAxis == "y"  // refuse loudly
-       └─ GaussianSplatRenderer (the twin)
+       └─ GsplatRenderer (the twin)
 ```
 
 - Set the marker's **physical size** in the reference image library; without it ARCore estimates and scale drifts.

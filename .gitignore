@@ -272,6 +272,7 @@ captures/
 outputs/
 datasets/
 *.ply
+*.ply.meta
 *.mp4
 *.mov
 *.splat
