@@ -117,9 +117,9 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 
 ## Mobile rendering
 
-| Date | Phone | Splat count | FPS | Notes |
-|---|---|---|---|---|
-| | | | | |
+| Date | Phone | Renderer | Splat count | FPS (Avg / 1% Low) | GPU Util % | Peak RAM/VRAM | Battery Drain (%/hr) | Thermals | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | | |
 
 **Still empty, and it is the most important empty table in this file.** Nothing has yet rendered
 on a phone, so the mobile splat budget remains provisional and FTW-38 stays blocked on the
