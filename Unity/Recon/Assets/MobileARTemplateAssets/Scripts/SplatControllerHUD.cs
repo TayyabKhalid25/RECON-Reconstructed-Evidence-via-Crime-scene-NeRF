@@ -7,8 +7,7 @@ namespace RECON.Performance
         [Tooltip("Assign multiple Splat GameObjects here to toggle between them.")]
         public GameObject[] splats;
         
-        [Tooltip("The Splat GameObject to move. If null, it will default to the object this script is attached to.")]
-        public Transform splatTransform;
+        private Transform splatTransform;
         
         private int currentSplatIndex = 0;
         
@@ -20,23 +19,24 @@ namespace RECON.Performance
 
         void Start()
         {
-            if (splats != null && splats.Length > 0)
+            if (splats == null || splats.Length == 0)
             {
-                for (int i = 0; i < splats.Length; i++)
-                {
-                    if (splats[i] != null) splats[i].SetActive(i == currentSplatIndex);
-                }
-                if (splats[currentSplatIndex] != null)
-                    splatTransform = splats[currentSplatIndex].transform;
-            }
-            else if (splatTransform == null)
-            {
-                splatTransform = this.transform; 
+                Debug.LogError("SplatControllerHUD: No Splats assigned! Please assign at least one Splat GameObject to the Splats array in the Inspector.");
+                return;
             }
 
-            initialPosition = splatTransform.position;
-            initialRotation = splatTransform.rotation;
-            initialScale = splatTransform.localScale;
+            for (int i = 0; i < splats.Length; i++)
+            {
+                if (splats[i] != null) splats[i].SetActive(i == currentSplatIndex);
+            }
+            
+            if (splats[currentSplatIndex] != null)
+            {
+                splatTransform = splats[currentSplatIndex].transform;
+                initialPosition = splatTransform.position;
+                initialRotation = splatTransform.rotation;
+                initialScale = splatTransform.localScale;
+            }
         }
 
         void OnGUI()
