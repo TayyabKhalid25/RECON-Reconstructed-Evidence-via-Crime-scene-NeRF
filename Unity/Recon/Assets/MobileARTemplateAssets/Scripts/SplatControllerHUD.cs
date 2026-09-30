@@ -51,20 +51,21 @@ namespace RECON.Performance
             
             // Scale UI for high-DPI mobile screens based on the smallest dimension
             int minDim = Mathf.Min(w, h);
-            int btnSize = Mathf.Max(60, minDim / 8);
+            int btnSize = Mathf.Max(50, minDim / 10);
             int margin = 20;
 
             GUIStyle btnStyle = new GUIStyle(GUI.skin.button);
-            btnStyle.fontSize = Mathf.Max(20, minDim / 25);
+            btnStyle.fontSize = Mathf.Max(18, minDim / 30);
             
             GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
-            boxStyle.fontSize = Mathf.Max(20, minDim / 25);
+            boxStyle.fontSize = Mathf.Max(18, minDim / 30);
 
             // Toggle button in top right
-            int rightColX = w - btnSize * 3 - margin;
+            int btnWidth = (int)(btnSize * 3.5f);
+            int rightColX = w - btnWidth - margin;
             int topY = margin;
 
-            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), showMenu ? "Hide Controls" : "Show Controls", btnStyle))
+            if (GUI.Button(new Rect(rightColX, topY, btnWidth, btnSize), showMenu ? "Hide Controls" : "Show Controls", btnStyle))
             {
                 showMenu = !showMenu;
             }
@@ -73,14 +74,14 @@ namespace RECON.Performance
             topY += btnSize + 10;
             
             // Mode Toggle
-            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), currentMode == ControlMode.Move ? "Mode: Move" : "Mode: Rotate", btnStyle))
+            if (GUI.Button(new Rect(rightColX, topY, btnWidth, btnSize), currentMode == ControlMode.Move ? "Mode: Move" : "Mode: Rotate", btnStyle))
             {
                 currentMode = currentMode == ControlMode.Move ? ControlMode.RotateScale : ControlMode.Move;
             }
             topY += btnSize + 10;
 
             // Reset Button
-            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), "Recenter Splat", btnStyle))
+            if (GUI.Button(new Rect(rightColX, topY, btnWidth, btnSize), "Recenter Splat", btnStyle))
             {
                 splatTransform.position = initialPosition;
                 splatTransform.rotation = initialRotation;
@@ -91,7 +92,7 @@ namespace RECON.Performance
             // Splat Selector Button
             if (splats != null && splats.Length > 1)
             {
-                if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), $"Next Splat ({currentSplatIndex + 1}/{splats.Length})", btnStyle))
+                if (GUI.Button(new Rect(rightColX, topY, btnWidth, btnSize), $"Next Splat ({currentSplatIndex + 1}/{splats.Length})", btnStyle))
                 {
                     if (splats[currentSplatIndex] != null) splats[currentSplatIndex].SetActive(false);
                     currentSplatIndex = (currentSplatIndex + 1) % splats.Length;
@@ -138,7 +139,7 @@ namespace RECON.Performance
                 int dpadX = margin + btnSize * 2;
                 int dpadY = h - margin - (int)(btnSize * 2.5f);
 
-                GUI.Box(new Rect(margin, dpadY - (int)(btnSize * 1.5f), btnSize * 5.5f, btnSize * 4f), "Move (Cam Relative)", boxStyle);
+                GUI.Box(new Rect(margin, dpadY - (int)(btnSize * 1.5f), btnSize * 4.5f, btnSize * 4f), "Move (Cam Relative)", boxStyle);
 
                 // Forward (Push Away)
                 if (GUI.RepeatButton(new Rect(dpadX, dpadY - btnSize, btnSize, btnSize), "^", btnStyle)) 
@@ -168,7 +169,7 @@ namespace RECON.Performance
                 int rotX = margin + btnSize * 2;
                 int rotY = h - margin - (int)(btnSize * 2.5f);
 
-                GUI.Box(new Rect(margin, rotY - (int)(btnSize * 1.5f), btnSize * 6.5f, btnSize * 4f), "Rotate & Scale", boxStyle);
+                GUI.Box(new Rect(margin, rotY - (int)(btnSize * 1.5f), btnSize * 5f, btnSize * 4f), "Rotate & Scale", boxStyle);
 
                 // Rotate (Pitch - Up/Down relative to camera view)
                 if (GUI.RepeatButton(new Rect(rotX, rotY - btnSize, btnSize, btnSize), "Up", btnStyle))
