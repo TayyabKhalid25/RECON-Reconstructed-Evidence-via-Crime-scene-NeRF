@@ -1,5 +1,22 @@
 {
   "dependencies": {
+    "com.arloopa.unitysplats": {
+      "version": "https://github.com/arloopa/UnitySplats.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.netpyoung.webp": "0.3.22",
+        "com.unity.mathematics": "1.3.2"
+      },
+      "hash": "6c0258189a2b124af1282fa9236fd9b6637f1a1a"
+    },
+    "com.netpyoung.webp": {
+      "version": "https://github.com/netpyoung/unity.webp.git?path=unity_project/Assets/unity.webp#0.3.22",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "9818db6327e09d399bf4fb84da4ed19f03b565b4"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 1,

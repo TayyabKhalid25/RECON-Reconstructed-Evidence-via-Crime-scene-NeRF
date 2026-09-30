@@ -54,7 +54,8 @@ MonoBehaviour:
   - {fileID: 3239328064754543239}
   - {fileID: 8923208743127255456}
   - {fileID: -8433751372252791986}
-  m_RendererFeatureMap: 87eaa552b667f42ca089c21e139bd57b4ebbe894cf4bf58a
+  - {fileID: 2557151492861036703}
+  m_RendererFeatureMap: 87eaa552b667f42ca089c21e139bd57b4ebbe894cf4bf58a9f88d700bcd37c23
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -83,6 +84,19 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &2557151492861036703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efbf998eb66045d5813ca6bd148cf83c, type: 3}
+  m_Name: GsplatURPFeature
+  m_EditorClassIdentifier: Gsplat::Gsplat.GsplatURPFeature
+  m_Active: 1
 --- !u!114 &3239328064754543239
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108,4 +122,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01052c1a4da12064d8681d7c1800f94a, type: 3}
   m_Name: GaussianSplatURPFeature
   m_EditorClassIdentifier: GaussianSplatting::GaussianSplatting.Runtime.GaussianSplatURPFeature
-  m_Active: 1
+  m_Active: 0
