@@ -548,8 +548,9 @@ Your Challenge 1 question, how much mesh approximation error is tolerable before
 
 #### Track C milestones
 
-- [ ] AR sample running on a physical device
-- [ ] Splat file rendering on device, frame rate recorded
+- [x] AR sample running on a physical device
+- [x] Splat file rendering on device, frame rate recorded (Baseline 14 FPS logged in FTW-30)
+- [ ] Implement mobile rendering optimizations (Alpha clip, Stencil) to fix fill-rate bottleneck (FTW-78)
 - [ ] Mobile splat budget decided and told to Wahaj
 - [ ] Marker alignment placing the scene at correct position, rotation, and scale
 - [ ] Scene fetched from the real API and rendered
