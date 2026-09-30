@@ -16,6 +16,9 @@ namespace RECON.Performance
         private Vector3 initialScale;
 
         private bool showMenu = true;
+        
+        private enum ControlMode { Move, RotateScale }
+        private ControlMode currentMode = ControlMode.Move;
 
         void Start()
         {
@@ -57,25 +60,37 @@ namespace RECON.Performance
             boxStyle.fontSize = Mathf.Max(20, h / 40);
 
             // Toggle button in top right
-            if (GUI.Button(new Rect(w - btnSize * 3 - margin, margin, btnSize * 3, btnSize), showMenu ? "Hide Controls" : "Show Controls", btnStyle))
+            int rightColX = w - btnSize * 3 - margin;
+            int topY = margin;
+
+            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), showMenu ? "Hide Controls" : "Show Controls", btnStyle))
             {
                 showMenu = !showMenu;
             }
 
             if (!showMenu) return;
+            topY += btnSize + 10;
+            
+            // Mode Toggle
+            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), currentMode == ControlMode.Move ? "Mode: Move" : "Mode: Rotate", btnStyle))
+            {
+                currentMode = currentMode == ControlMode.Move ? ControlMode.RotateScale : ControlMode.Move;
+            }
+            topY += btnSize + 10;
 
-            // Reset Button below Toggle
-            if (GUI.Button(new Rect(w - btnSize * 3 - margin, margin + btnSize + 10, btnSize * 3, btnSize), "Recenter Splat", btnStyle))
+            // Reset Button
+            if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), "Recenter Splat", btnStyle))
             {
                 splatTransform.position = initialPosition;
                 splatTransform.rotation = initialRotation;
                 splatTransform.localScale = initialScale;
             }
+            topY += btnSize + 10;
 
             // Splat Selector Button
             if (splats != null && splats.Length > 1)
             {
-                if (GUI.Button(new Rect(w - btnSize * 3 - margin, margin + btnSize * 2 + 20, btnSize * 3, btnSize), $"Next Splat ({currentSplatIndex + 1}/{splats.Length})", btnStyle))
+                if (GUI.Button(new Rect(rightColX, topY, btnSize * 3, btnSize), $"Next Splat ({currentSplatIndex + 1}/{splats.Length})", btnStyle))
                 {
                     if (splats[currentSplatIndex] != null) splats[currentSplatIndex].SetActive(false);
                     currentSplatIndex = (currentSplatIndex + 1) % splats.Length;
@@ -116,58 +131,68 @@ namespace RECON.Performance
                     right = Vector3.right;
             }
 
-            // ----- Translation D-PAD (Bottom Left) -----
-            int dpadX = margin + btnSize;
-            int dpadY = h - margin - btnSize * 3;
-
-            GUI.Box(new Rect(margin, dpadY - (int)(btnSize * 1.5f), btnSize * 4.5f, btnSize * 4.5f), "Move (Cam Relative)", boxStyle);
-
-            // Forward (Push Away)
-            if (GUI.RepeatButton(new Rect(dpadX, dpadY - btnSize, btnSize, btnSize), "^", btnStyle)) 
-                splatTransform.position += forward * moveSpeed;
-            
-            // Back (Pull Closer)
-            if (GUI.RepeatButton(new Rect(dpadX, dpadY + btnSize, btnSize, btnSize), "v", btnStyle)) 
-                splatTransform.position -= forward * moveSpeed;
-
-            // Left
-            if (GUI.RepeatButton(new Rect(dpadX - btnSize, dpadY, btnSize, btnSize), "<", btnStyle)) 
-                splatTransform.position -= right * moveSpeed;
-
-            // Right
-            if (GUI.RepeatButton(new Rect(dpadX + btnSize, dpadY, btnSize, btnSize), ">", btnStyle)) 
-                splatTransform.position += right * moveSpeed;
-                
-            // Up/Down (Y Axis)
-            if (GUI.RepeatButton(new Rect(dpadX + btnSize * 2.2f, dpadY - btnSize, btnSize * 1.2f, btnSize), "Up", btnStyle))
-                splatTransform.position += Vector3.up * moveSpeed;
-            if (GUI.RepeatButton(new Rect(dpadX + btnSize * 2.2f, dpadY + btnSize, btnSize * 1.2f, btnSize), "Dn", btnStyle))
-                splatTransform.position += Vector3.down * moveSpeed;
-
-
-            // ----- Rotation & Scale Controls (Bottom Right) -----
-            int rotX = w - margin - btnSize * 4;
-            int rotY = h - margin - btnSize * 3;
-
-            GUI.Box(new Rect(rotX, rotY - (int)(btnSize * 1.5f), btnSize * 4, btnSize * 4.5f), "Rotate & Scale", boxStyle);
-
-            // Rotate (Yaw)
-            if (GUI.RepeatButton(new Rect(rotX, rotY - btnSize/2, btnSize * 1.5f, btnSize * 1.5f), "Rot L", btnStyle))
-                splatTransform.Rotate(Vector3.up, rotSpeed, Space.World);
-
-            if (GUI.RepeatButton(new Rect(rotX + btnSize * 2, rotY - btnSize/2, btnSize * 1.5f, btnSize * 1.5f), "Rot R", btnStyle))
-                splatTransform.Rotate(Vector3.up, -rotSpeed, Space.World);
-
-            // Scale
-            if (GUI.RepeatButton(new Rect(rotX, rotY + btnSize * 1.2f, btnSize * 1.5f, btnSize), "Scale +", btnStyle))
-                splatTransform.localScale += Vector3.one * moveSpeed * 0.5f;
-
-            if (GUI.RepeatButton(new Rect(rotX + btnSize * 2, rotY + btnSize * 1.2f, btnSize * 1.5f, btnSize), "Scale -", btnStyle))
+            if (currentMode == ControlMode.Move)
             {
-                splatTransform.localScale -= Vector3.one * moveSpeed * 0.5f;
-                // Prevent negative or zero scale
-                if (splatTransform.localScale.x < 0.01f) 
-                    splatTransform.localScale = Vector3.one * 0.01f;
+                // ----- Translation D-PAD -----
+                int dpadX = margin + btnSize * 2;
+                int dpadY = h - margin - (int)(btnSize * 2.5f);
+
+                GUI.Box(new Rect(margin, dpadY - (int)(btnSize * 1.5f), btnSize * 5.5f, btnSize * 4f), "Move (Cam Relative)", boxStyle);
+
+                // Forward (Push Away)
+                if (GUI.RepeatButton(new Rect(dpadX, dpadY - btnSize, btnSize, btnSize), "^", btnStyle)) 
+                    splatTransform.position += forward * moveSpeed;
+                
+                // Back (Pull Closer)
+                if (GUI.RepeatButton(new Rect(dpadX, dpadY + btnSize, btnSize, btnSize), "v", btnStyle)) 
+                    splatTransform.position -= forward * moveSpeed;
+
+                // Left
+                if (GUI.RepeatButton(new Rect(dpadX - btnSize, dpadY, btnSize, btnSize), "<", btnStyle)) 
+                    splatTransform.position -= right * moveSpeed;
+
+                // Right
+                if (GUI.RepeatButton(new Rect(dpadX + btnSize, dpadY, btnSize, btnSize), ">", btnStyle)) 
+                    splatTransform.position += right * moveSpeed;
+                    
+                // Up/Down (Y Axis)
+                if (GUI.RepeatButton(new Rect(dpadX + btnSize * 2.5f, dpadY - btnSize, btnSize * 1.5f, btnSize), "Up", btnStyle))
+                    splatTransform.position += Vector3.up * moveSpeed;
+                if (GUI.RepeatButton(new Rect(dpadX + btnSize * 2.5f, dpadY + btnSize, btnSize * 1.5f, btnSize), "Dn", btnStyle))
+                    splatTransform.position += Vector3.down * moveSpeed;
+            }
+            else
+            {
+                // ----- Rotation & Scale Controls -----
+                int rotX = margin + btnSize * 2;
+                int rotY = h - margin - (int)(btnSize * 2.5f);
+
+                GUI.Box(new Rect(margin, rotY - (int)(btnSize * 1.5f), btnSize * 6.5f, btnSize * 4f), "Rotate & Scale", boxStyle);
+
+                // Rotate (Pitch - Up/Down relative to camera view)
+                if (GUI.RepeatButton(new Rect(rotX, rotY - btnSize, btnSize, btnSize), "Up", btnStyle))
+                    splatTransform.Rotate(right, rotSpeed, Space.World);
+
+                if (GUI.RepeatButton(new Rect(rotX, rotY + btnSize, btnSize, btnSize), "Dn", btnStyle))
+                    splatTransform.Rotate(right, -rotSpeed, Space.World);
+
+                // Rotate (Yaw - Left/Right)
+                if (GUI.RepeatButton(new Rect(rotX - btnSize, rotY, btnSize, btnSize), "L", btnStyle))
+                    splatTransform.Rotate(Vector3.up, rotSpeed, Space.World);
+
+                if (GUI.RepeatButton(new Rect(rotX + btnSize, rotY, btnSize, btnSize), "R", btnStyle))
+                    splatTransform.Rotate(Vector3.up, -rotSpeed, Space.World);
+
+                // Scale
+                if (GUI.RepeatButton(new Rect(rotX + btnSize * 2.5f, rotY - btnSize, btnSize * 1.5f, btnSize), "Scale +", btnStyle))
+                    splatTransform.localScale += Vector3.one * moveSpeed * 0.5f;
+
+                if (GUI.RepeatButton(new Rect(rotX + btnSize * 2.5f, rotY + btnSize, btnSize * 1.5f, btnSize), "Scale -", btnStyle))
+                {
+                    splatTransform.localScale -= Vector3.one * moveSpeed * 0.5f;
+                    if (splatTransform.localScale.x < 0.01f) 
+                        splatTransform.localScale = Vector3.one * 0.01f;
+                }
             }
         }
     }
