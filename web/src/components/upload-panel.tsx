@@ -154,7 +154,7 @@ export function UploadPanel({
                   name="quality"
                   value={q.id}
                   checked={quality === q.id}
-                  onChange={() => setQuality(q.id as any)}
+                  onChange={() => setQuality(q.id as 'FAST' | 'HIGH' | 'MAX')}
                   className="hidden"
                 />
                 <span className="font-mono text-sm uppercase text-ink-bright">{q.label}</span>
