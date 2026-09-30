@@ -25,17 +25,32 @@ jobs:
           
           echo "Finding merged PRs older than $THRESHOLD_DATE..."
           
-          # Query GitHub for PRs merged before the threshold date and extract the branch names
-          BRANCHES=$(gh pr list --state merged --limit 100 --json headRefName,mergedAt \
-            -q ".[] | select(.mergedAt < \"$THRESHOLD_DATE\") | .headRefName")
+          # 1. Fetch default branch and active remote branches
+          DEFAULT_BRANCH=$(gh api "repos/${{ github.repository }}" --jq '.default_branch')
+          EXISTING_BRANCHES=$(gh api "repos/${{ github.repository }}/branches" --paginate --jq '.[].name')
           
-          if [ -z "$BRANCHES" ]; then
-            echo "No old merged branches found."
+          # 2. Query GitHub for unique branch names of PRs merged before the threshold date
+          OLD_MERGED_BRANCHES=$(gh pr list --state merged --limit 100 --json headRefName,mergedAt \
+            -q ".[] | select(.mergedAt < \"$THRESHOLD_DATE\") | .headRefName" | sort -u)
+          
+          # 3. Filter only for branches that actually still exist and are not the default branch
+          TO_DELETE=()
+          for branch in $OLD_MERGED_BRANCHES; do
+            if [ "$branch" = "$DEFAULT_BRANCH" ]; then
+              continue
+            fi
+            if echo "$EXISTING_BRANCHES" | grep -Fxq "$branch"; then
+              TO_DELETE+=("$branch")
+            fi
+          done
+          
+          if [ ${#TO_DELETE[@]} -eq 0 ]; then
+            echo "No existing branches found that were merged over 15 days ago."
             exit 0
           fi
           
-          # Loop through and delete the branches via the GitHub API
-          for branch in $BRANCHES; do
+          # 4. Delete only existing candidate branches
+          for branch in "${TO_DELETE[@]}"; do
             echo "Deleting branch: $branch"
-            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch" || echo "Branch $branch may have already been deleted."
-          done
+            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$branch"
+          done
