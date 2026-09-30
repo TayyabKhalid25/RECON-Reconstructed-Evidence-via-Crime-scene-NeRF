@@ -49,15 +49,16 @@ namespace RECON.Performance
             int w = Screen.width;
             int h = Screen.height;
             
-            // Scale UI for high-DPI mobile screens
-            int btnSize = Mathf.Max(60, h / 12);
+            // Scale UI for high-DPI mobile screens based on the smallest dimension
+            int minDim = Mathf.Min(w, h);
+            int btnSize = Mathf.Max(60, minDim / 8);
             int margin = 20;
 
             GUIStyle btnStyle = new GUIStyle(GUI.skin.button);
-            btnStyle.fontSize = Mathf.Max(20, h / 40);
+            btnStyle.fontSize = Mathf.Max(20, minDim / 25);
             
             GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
-            boxStyle.fontSize = Mathf.Max(20, h / 40);
+            boxStyle.fontSize = Mathf.Max(20, minDim / 25);
 
             // Toggle button in top right
             int rightColX = w - btnSize * 3 - margin;
