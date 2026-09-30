@@ -50,8 +50,7 @@ namespace RECON.Performance
             long systemRam = SystemInfo.systemMemorySize;
             long graphicsRam = SystemInfo.graphicsMemorySize;
 
-            // Thermals are not available in this Unity version natively
-            string text = string.Format("FPS: {0:0.} (1% Low: {1:0.})\nBattery: {2:0.0}% ({3})\nThermals: N/A (Use ADB)\nSys RAM: {4} MB\nVRAM: {5} MB", 
+            string text = string.Format("FPS: {0:0.} (1% Low: {1:0.})\nBattery: {2:0.0}% ({3})\nSys RAM: {4} MB\nVRAM: {5} MB", 
                 fps, onePercentLowFps, batteryPct > 0 ? batteryPct.ToString("0.0") : "N/A", batteryStatus, 
                 systemRam, graphicsRam);
                 
