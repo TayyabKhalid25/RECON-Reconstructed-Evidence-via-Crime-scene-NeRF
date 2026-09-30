@@ -4,8 +4,13 @@ namespace RECON.Performance
 {
     public class SplatControllerHUD : MonoBehaviour
     {
+        [Tooltip("Assign multiple Splat GameObjects here to toggle between them.")]
+        public GameObject[] splats;
+        
         [Tooltip("The Splat GameObject to move. If null, it will default to the object this script is attached to.")]
         public Transform splatTransform;
+        
+        private int currentSplatIndex = 0;
         
         private Vector3 initialPosition;
         private Quaternion initialRotation;
@@ -15,7 +20,16 @@ namespace RECON.Performance
 
         void Start()
         {
-            if (splatTransform == null)
+            if (splats != null && splats.Length > 0)
+            {
+                for (int i = 0; i < splats.Length; i++)
+                {
+                    if (splats[i] != null) splats[i].SetActive(i == currentSplatIndex);
+                }
+                if (splats[currentSplatIndex] != null)
+                    splatTransform = splats[currentSplatIndex].transform;
+            }
+            else if (splatTransform == null)
             {
                 splatTransform = this.transform; 
             }
@@ -56,6 +70,24 @@ namespace RECON.Performance
                 splatTransform.position = initialPosition;
                 splatTransform.rotation = initialRotation;
                 splatTransform.localScale = initialScale;
+            }
+
+            // Splat Selector Button
+            if (splats != null && splats.Length > 1)
+            {
+                if (GUI.Button(new Rect(w - btnSize * 3 - margin, margin + btnSize * 2 + 20, btnSize * 3, btnSize), $"Next Splat ({currentSplatIndex + 1}/{splats.Length})", btnStyle))
+                {
+                    if (splats[currentSplatIndex] != null) splats[currentSplatIndex].SetActive(false);
+                    currentSplatIndex = (currentSplatIndex + 1) % splats.Length;
+                    if (splats[currentSplatIndex] != null)
+                    {
+                        splats[currentSplatIndex].SetActive(true);
+                        splatTransform = splats[currentSplatIndex].transform;
+                        splatTransform.position = initialPosition;
+                        splatTransform.rotation = initialRotation;
+                        splatTransform.localScale = initialScale;
+                    }
+                }
             }
 
             // Time independent movement
