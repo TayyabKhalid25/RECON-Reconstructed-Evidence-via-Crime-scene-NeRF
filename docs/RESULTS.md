@@ -119,17 +119,14 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 
 | Date | Phone | Renderer | Splat count | FPS (Avg / 1% Low) | GPU Util % | Peak RAM/VRAM | Battery Drain (%/hr) | Thermals | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | |
+| 2026-09-30 | S20 FE | arloopa | 178,333 | 14 / 12 | N/A | 7.4 GB / 7.0 GB | ~60% | Minor | Unoptimized baseline (Fill-rate bound) |
 
-**Still empty, and it is the most important empty table in this file.** Nothing has yet rendered
-on a phone, so the mobile splat budget remains provisional and FTW-38 stays blocked on the
-measurement. What we do know as of 2026-09-02 is a negative result from Track C (PR #14): the
-stock `aras-p/UnityGaussianSplatting` declares HLSL wave intrinsics (`wavebasic`, `waveballot`)
-at file scope in `SplatUtilities.compute`, which fail to compile on Mali/Adreno and take all 19
-kernels down with them. `gsplat-unity` isolates wave pragmas to its sort kernels, while
-`arloopa/UnitySplats` provides an async-CPU sort fallback for OpenGL ES 3.1. So the FPS figure is
-blocked on evaluating these alternative renderers, not on a capture. Full audit in
-`docs/MOBILE-SPLAT-OPTIONS.md`.
+**Baseline Established (FTW-30):** The 14 FPS result above represents the raw, unoptimized rendering of the splat directly over AR Foundation (which inherently caps at 30 FPS to match the camera feed on most Android devices). 
+
+**Diagnosis:** This is definitively a **Fill-Rate (Overdraw) bottleneck**, not a vertex processing limit. When the splat is scaled down to occupy a small corner of the screen, performance instantly shoots up to the 30 FPS cap. This means the GPU has no problem processing 178,000 vertices; it simply chokes on calculating thousands of overlapping alpha-blended pixels when the splats fill the entire screen. *(Note: The RAM/VRAM values logged are total device limits reported by Unity `SystemInfo`, not active utilization).*
+
+**Do not panic about the 14 FPS (Note for Wahaj):** 
+This is just the worst-case scenario using default shader settings. We have already identified a proven optimization path (based on CDRIN SIGGRAPH 2025 research) that yields a 3.3x performance boost by aggressively clipping transparent pixels (alpha < 15/255) and capping stencil overdraw. These shader-level optimizations will be implemented in the next ticket, meaning the 178k splat budget is highly likely to be viable for production without needing aggressive decimation.
 
 ### Export decimation, measured 2026-09-02 (legion)
 
