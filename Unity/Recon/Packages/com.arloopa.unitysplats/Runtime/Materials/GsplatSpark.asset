@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7c727244cd14cfd896562aa99c958f3, type: 3}
+  m_Name: GsplatSpark
+  m_EditorClassIdentifier: 
+  DefaultMaterial: {fileID: 2100000, guid: 0fd25878460c14a46946f5bffc5ee42f, type: 2}
+  CalcDepthShader: {fileID: 7200000, guid: f234fe86176948548be7fad55f5d6147, type: 3}
+  InitOrderShader: {fileID: 7200000, guid: 9f8e041cb7bfae141b2e6ee80402bf45, type: 3}

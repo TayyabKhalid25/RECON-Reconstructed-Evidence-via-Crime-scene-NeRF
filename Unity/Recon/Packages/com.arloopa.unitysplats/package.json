@@ -1,0 +1,40 @@
+{
+  "author": {
+    "name": "ARLOOPA",
+    "url": "https://arloopa.com"
+  },
+  "description": "Cross-platform Gaussian Splatting renderer for Unity with PlayCanvas-compatible formats",
+  "displayName": "UnitySplats",
+  "name": "com.arloopa.unitysplats",
+  "version": "1.2.0",
+  "unity": "6000.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arloopa/UnitySplats.git"
+  },
+  "documentationUrl": "https://github.com/arloopa/UnitySplats#readme",
+  "changelogUrl": "https://github.com/arloopa/UnitySplats/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/arloopa/UnitySplats/blob/main/LICENSE.md",
+  "keywords": [
+    "gaussian-splatting",
+    "3dgs",
+    "splat",
+    "playcanvas",
+    "urp",
+    "hdrp",
+    "xr"
+  ],
+  "samples": [
+    {
+      "displayName": "Runtime PLY Loading",
+      "description": "Loads and renders a Gaussian-splat PLY from a byte array at runtime.",
+      "path": "Samples~/RuntimePlyLoading"
+    }
+  ],
+  "dependencies": {
+    "com.netpyoung.webp": "0.3.22",
+    "com.unity.mathematics": "1.3.2"
+  },
+  "_fingerprint": "6c0258189a2b124af1282fa9236fd9b6637f1a1a"
+}
