@@ -120,13 +120,21 @@ has measured what a phone does with them; FTW-16 sets the real budget. Full pres
 | Date | Phone | Renderer | Splat count | FPS (Avg / 1% Low) | GPU Util % | Peak RAM/VRAM | Battery Drain (%/hr) | Thermals | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | 2026-09-30 | S20 FE | arloopa | 178,333 | 14 / 12 | N/A | 7.4 GB / 7.0 GB | ~60% | Minor | Unoptimized baseline (Fill-rate bound) |
+| 2026-10-01 | S20 FE | arloopa | 164,710 | 16 / 14 | N/A | 7.4 GB / 7.0 GB | ~60% | Minor | Strategy 1: Sort 3rd frame + async upload (Cafe Table, GameObject tuning only) |
+| 2026-10-01 | S20 FE | arloopa (CDRIN) | 164,710 | 20-21 / 15 | N/A | 7.4 GB / 7.0 GB | ~60% | Minor | Strategy 2: CDRIN alpha clip (10/255) + quad rescale + sort 3rd frame + async upload (Cafe Table) |
+| 2026-10-01 | S20 FE | arloopa (CDRIN) | 14,526 | 30 / 29 | N/A | 7.4 GB / 7.0 GB | ~60% | Minor | Strategy 2: Small splat (Luigi; hits 30 FPS AR Foundation sync limit) |
 
 **Baseline Established (FTW-30):** The 14 FPS result above represents the raw, unoptimized rendering of the splat directly over AR Foundation (which inherently caps at 30 FPS to match the camera feed on most Android devices). 
 
 **Diagnosis:** This is definitively a **Fill-Rate (Overdraw) bottleneck**, not a vertex processing limit. When the splat is scaled down to occupy a small corner of the screen, performance instantly shoots up to the 30 FPS cap. This means the GPU has no problem processing 178,000 vertices; it simply chokes on calculating thousands of overlapping alpha-blended pixels when the splats fill the entire screen. *(Note: The RAM/VRAM values logged are total device limits reported by Unity `SystemInfo`, not active utilization).*
 
-**Do not panic about the 14 FPS (Note for Wahaj):** 
-This is just the worst-case scenario using default shader settings. We have already identified a proven optimization path (based on CDRIN SIGGRAPH 2025 research) that yields a 3.3x performance boost by aggressively clipping transparent pixels (alpha < 15/255) and capping stencil overdraw. These shader-level optimizations will be implemented in the next ticket, meaning the 178k splat budget is highly likely to be viable for production without needing aggressive decimation.
+**CDRIN Optimization Results (FTW-78, measured 2026-10-01):**
+Two optimization stages were evaluated on the Galaxy S20 FE:
+1. **Strategy 1 (GameObject Tuning Only):** Configuring `SortRefreshRate = 3` (sort every 3rd frame) and enabling async GPU upload produced a modest lift from 14 FPS to **16 FPS avg (1% low: 14 FPS)** on the Cafe Table scene (164,710 splats). Thermals remained minor and battery drain was steady at ~60%/hr. This isolated test confirms that sorting throughput and upload bandwidth are not the primary bottleneck on mobile.
+2. **Strategy 2 (Full CDRIN Pipeline):** Adding aggressive shader-stage alpha clipping (`10/255` cutoff for vertex early-out and fragment discard) plus quad rescaling (`ClipCorner()` threshold in `Gsplat.hlsl` tightened to `10/255`) boosted frame rates to **20–21 FPS avg (1% low: 15 FPS)** on the same 164,710-splat Cafe Table scene. This delivers a **~45–50% FPS improvement** over the unoptimized baseline under full-screen overdraw, with negligible visual degradation.
+3. **Small Splat Validation (Luigi, 14,526 splats):** Under Strategy 2, rendering a smaller foreground object achieved a solid **30 FPS avg (1% low: 29 FPS)**, completely saturating the AR Foundation 30 FPS camera sync cap.
+
+**Takeaway:** The overdraw hypothesis is validated. Shader-level alpha discarding and quad footprint reduction provide the necessary headroom on mobile GPUs. Reaching a rock-solid 30 FPS on 160k+ scenes without decimation will be targeted in subsequent tickets via bitmasked stencil overdraw capping and distance-based LOD.
 
 ### Export decimation, measured 2026-09-02 (legion)
 
