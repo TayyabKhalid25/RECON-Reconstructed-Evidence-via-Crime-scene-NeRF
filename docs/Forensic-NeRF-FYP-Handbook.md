@@ -65,10 +65,10 @@ In one sentence: a phone records a walkthrough of a room, a CUDA machine turns t
 | # | Stage | Runs on | Produces |
 |---|---|---|---|
 | 1 | Capture walkthrough video | Phone | scene.mp4 |
-| 2 | Upload, create case, enqueue job | Web (Next.js) | Job(status=PENDING) |
+| 2 | Upload, create case, enqueue job | Unity (WebView → Next.js) | Job(status=PENDING) |
 | 3 | Frames, SfM poses, splat training | GPU worker | scene.ply + metadata.json |
 | 4 | Store asset, mark ready, log custody | Web | Job(status=READY) |
-| 5 | Fetch, align to room, render splats | Unity AR | Anchored digital twin |
+| 5 | "Open in AR" triggers JS-to-C# bridge, Unity fetches .ply, aligns to room, renders splats | Unity AR (native) | Anchored digital twin |
 | 6 | Ballistics and spatter overlay | Unity + PhysX | Simulation overlay |
 
 > [!WARNING]
@@ -200,10 +200,12 @@ Fill the right column in once, on day one, with the exact versions you install. 
 | [W] B | Queue | Redis plus BullMQ | ___ |
 | [W] B | Auth | JWT sessions, roles in DB | ___ |
 | [W] B | Local dev | Docker Compose for Postgres and Redis | ___ |
+| [T] C | OS | Android only. iOS is formally out of scope for the FYP-1 delivery | ___ |
 | [T] C | Editor | Unity 6 LTS, pin the exact patch `verify` | ___ |
 | [T] C | Pipeline | URP | ___ |
 | [T] C | AR | AR Foundation 6.x plus ARKit and ARCore provider packages | ___ |
 | [T] C | Splat renderer | arloopa/UnitySplats, MIT. Adopted 2026-09-30 (replaced aras-p due to mobile wave ops failure; see `STACK.md` and `MOBILE-SPLAT-OPTIONS.md`) | ___ |
+| [T] C | WebView Bridge | gree/unity-webview (MIT). Do not buy expensive 3D webview assets for this | ___ |
 | [T] C | Anchors | Per Decision 1 | ___ |
 | [T] C | Physics | PhysX, bundled with Unity | ___ |
 
@@ -338,6 +340,22 @@ GET    /api/scenes/:id/anchor     second device resolves the same anchor
 
 Those last two are how the second investigator sees the twin in the same place. Store the anchor identifier plus the transform from anchor space to scene space, so the alignment survives across sessions and devices.
 
+### JS-to-C# WebView Bridge
+
+The Next.js dashboard runs inside a native 2D WebView on Android. When the user taps "Open in AR", the web layer emits a JSON payload to the Unity host through `window.Unity.call()`. Wahaj [W] emits it, Tayyab [T] intercepts it.
+
+```json
+// Emitted by Next.js when "Open in AR" is tapped
+{
+  "action": "OPEN_AR",
+  "sceneId": "scene_123abc",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+> [!IMPORTANT]
+> **UnityWebRequest does not share the WebView's cookie jar.** The WebView has its own session cookie after the user logs in, but `UnityWebRequest` runs in a separate HTTP stack with no access to that cookie jar. The JWT token must be passed explicitly through this bridge payload so that Unity can set an `Authorization: Bearer` header on its own requests when downloading the `.ply` asset. Do not attempt to extract cookies from the Android WebView; it is fragile, version dependent, and unnecessary when the token is right there in the payload.
+
 ### metadata.json, written by the GPU worker
 
 Unity cannot place a scene correctly without this. Every field here exists because something breaks without it.
@@ -447,6 +465,9 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 8. **Encryption at rest.** AES-256-GCM on assets and on sensitive columns.
 9. **Hardening.** Rate limiting, input validation, consistent error responses, no stack traces to clients.
 
+> [!IMPORTANT]
+> **Mobile-First Responsive UI [W].** Since this web app is now the actual UI of the Android application, mobile responsiveness is no longer optional. Every view, from the case list to the upload flow to the scene detail page, must be usable on a phone screen without horizontal scrolling or touch target misses. The "Open in AR" button must trigger the `window.Unity.call()` bridge when running inside the Unity shell and degrade gracefully to a disabled state with an explanatory tooltip when opened in a regular browser.
+
 > [!WARNING]
 > **RBAC mistake to avoid**
 >
@@ -482,14 +503,22 @@ Highest risk track, because it is the one where the desktop research tooling mee
 
 ### Build order, riskiest first
 
-1. **Splat on device.** Render a real `.ply` on a real phone, measure frame rate. Everything else is pointless until this is known.
-2. **Marker alignment.** Tracked image of known size becomes the scene origin. Gives you pose and scale at once.
-3. **Fetch from API.** Download by scene id over Tailscale, render what the pipeline actually produced.
-4. **Colliders.** Start with detected AR planes. Swap in the Poisson mesh from Track A later.
-5. **Ballistics.** Parameter input, trajectory integration, impact point, persistent overlay.
-6. **Persistence and multi user.** Host and resolve a cloud anchor, second device joins.
-7. **Spatter proxy.** Ellipse distribution from impact geometry.
-8. **Measurement tools and polish.** Point to point distance, scene navigation, the demo affordances.
+1. **WebView integration.** Install `gree/unity-webview`, render Wahaj's dashboard fullscreen on an Android device. Until the user can see and interact with the Next.js UI inside Unity, there is no application. This is the new week 1 risk, replacing "splat on device" which is already answered.
+2. **File permissions.** Ensure `<input type="file">` correctly opens the Android camera and gallery from inside the WebView. This requires injecting `READ_MEDIA_VIDEO` and `CAMERA` into the `AndroidManifest.xml` and handling the WebView's file chooser callback. If this does not work, the user cannot upload a video without leaving the app.
+3. **The bridge.** Intercept the `OPEN_AR` JSON payload from the dashboard via `window.Unity.call()`. Parse it, extract `sceneId` and `token`, and hand both to the native AR flow. This is the hinge between the web layer and the native layer, and it must work before anything downstream makes sense.
+4. **AR mode switch.** Hide the WebView, enable `ARSession` and `ARCameraManager`, fetch the `.ply` using the bridged token (set `Authorization: Bearer` on `UnityWebRequest`), and render the splat. The user should go from tapping "Open in AR" to seeing the scene anchored in their room in one smooth transition.
+5. **Return path.** A native Unity "Exit AR" button that disables `ARSession` (to save battery and thermals) and unhides the WebView. The user must be able to go back to the dashboard without restarting the app.
+6. **Marker alignment.** Tracked image of known size becomes the scene origin. Gives you pose and scale at once. (Unchanged from the original plan.)
+7. **Ballistics.** Parameter input, trajectory integration, impact point, persistent overlay. (Unchanged from the original plan.)
+8. **Colliders.** Start with detected AR planes. Swap in the Poisson mesh from Track A later.
+9. **Persistence and multi user.** Host and resolve a cloud anchor, second device joins.
+10. **Spatter proxy.** Ellipse distribution from impact geometry.
+11. **Measurement tools and polish.** Point to point distance, scene navigation, the demo affordances.
+
+> [!WARNING]
+> **AR subsystem thermals**
+>
+> Do not leave ARCore running behind the WebView. If `ARSession` stays active while the user spends 10 minutes managing cases, the phone will throttle before they ever open a splat. Disable the AR components entirely until the `OPEN_AR` payload is received. On the return path, disable them again immediately. ARCore and the camera pipeline draw significant power even when rendering nothing visible.
 
 > [!WARNING]
 > **Mobile splat rendering, plan for it not working well**
@@ -851,7 +880,8 @@ The value here is the middle column. Decide the fallback now, while you are calm
 | **8 GB will not fit a real room** | Downscale further, cap splats, tighten scene bounds, split the room into two overlapping captures. Last resort, a few hours of rented cloud GPU | 13 Sep |
 | **SfM fails on a scene** | Recapture with the protocol followed strictly, add texture to bare surfaces, more frames, slower motion. If a scene keeps failing, substitute a different room. Do not burn a week on one hostile scene | ongoing |
 | **Poisson colliders unusable** | Ship AR plane and device mesh colliders, and present the splat mesh comparison as the research finding it is, including where it fails | 8 Nov |
-| **iOS blocked**<br>signing, Mac access, device | Android only for the graded demo, document iOS as designed and partially built. Do not let it consume November | 1 Nov |
+| **WebView blocks native file uploads or camera access** | Android permissions prevent the Next.js `<input type="file">` from accessing the file picker or camera inside Unity's WebView. Fallback: write a native C# gallery picker and upload via `UnityWebRequest`, bypassing the web UI for uploads only. The rest of the dashboard stays in the WebView | 04 Oct |
+| **iOS blocked**<br>Already executed | We are building purely for Android to guarantee the WebView bridge and ARCore integration work flawlessly. iOS is explicitly cut from FYP-1. No further decision needed | — |
 | **Free tier lapses or DB suspends** | Local Docker Compose plus Tailscale is a complete substitute for a demo. Keep it working the whole semester as your fallback, not just at the start | ongoing |
 | **A member is unavailable**<br>illness, other courses | Contract in Section 06 is what makes this survivable. GPU already cross covers (Wahaj/Faizan) and, since 30 Aug, so does Unity (Tayyab/Faizan). Web is now the single point of failure, Wahaj alone owns it, so at least one other person should be able to build and run `/web` by 1 Nov | 1 Nov |
 | **Evaluation left too late** | Most common way good FYPs lose marks. Harness must run on demand by 8 Nov, even if partial | 8 Nov |
