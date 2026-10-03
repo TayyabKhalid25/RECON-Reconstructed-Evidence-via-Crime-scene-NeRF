@@ -253,3 +253,14 @@ On 2026-09-30, we compared a physical 4ft x 2ft table in both the marker (`1`) a
 
 This >25% disagreement proves that without a marker, COLMAP does not merely lose absolute scale—it introduces severe geometric warping and aspect ratio distortion. The marker acts as a fixed metric anchor that forces COLMAP to lock the structure's aspect ratio. This concludes FTW-36: the marker is strictly required for valid forensic measurements, not just for scaling, but for preserving the integrity of the geometry itself.
 
+
+## Custody log overhead, measured 2026-10-03 (legion)
+
+FTW-48 requires measuring the overhead of the hash-chained audit log. Testing via sequential appends and full chain verification yields:
+
+| Metric | Time | Notes |
+|---|---|---|
+| Append overhead per row | 2.66 ms | Includes cryptographic SHA-256 hash generation, sequential advisory lock `pg_advisory_xact_lock()`, and PostgreSQL insert. |
+| Chain verification | ~1.94 ms (for 122 rows) | Includes full table read and recomputing/comparing SHA-256 hashes sequentially. Verification scales linearly at roughly ~0.016 ms/row. |
+
+**Conclusion:** The overhead of maintaining forensic chain of custody is trivially small (sub-3ms per append). Given that video uploads and GPU training take minutes, the synchronous wait for an audit append on API actions is completely imperceptible to the user.
