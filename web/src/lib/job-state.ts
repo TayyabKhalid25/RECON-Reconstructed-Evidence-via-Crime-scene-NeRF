@@ -22,6 +22,7 @@ const ALLOWED: Record<JobStatus, readonly JobStatus[]> = {
 }
 
 export function canTransition(from: JobStatus, to: JobStatus): boolean {
+  if (from === to && !isTerminal(from)) return true
   return ALLOWED[from].includes(to)
 }
 

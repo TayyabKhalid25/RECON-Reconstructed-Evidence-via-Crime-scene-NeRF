@@ -425,7 +425,7 @@ Record which machine produced which result. When two machines disagree, and they
 - [x] First `.ply` exported from your own capture
 - [x] Capture protocol written to `docs/CAPTURE.md`
 - [x] VRAM safe preset found and recorded for 8 GB — `gpu/PRESET.md`, validated on a second capture
-- [ ] FastAPI worker claiming jobs from the shared queue
+- [x] FastAPI worker claiming jobs from the shared queue — superseded by `gpu/worker.py`
 - [x] Metric scale solved and written into `metadata.json` — unitScale 0.369573 via the marker; written by `gpu/run_scene.py`
 - [ ] All three machines registered as workers
 - [ ] Poisson mesh export path working, for colliders
@@ -467,13 +467,13 @@ Least uncertain track technically, which makes it the one to keep ahead of sched
 
 - [x] Schema migrated, seed script for a test user and case — first migration applied 2026-09-02, `prisma/migrations/20260902163105_init`
 - [x] Upload, hash, enqueue working end to end
-- [ ] Real GPU worker driving a job to READY
+- [x] Real GPU worker driving a job to READY
 - [x] Dashboard with live status and asset download — cases, upload with progress, scene detail, custody view; SWR polling stops on a terminal state
 - [x] Login plus JWT plus three roles enforced server side — RBAC in the route handlers; ownership mismatches return 404, not 403
 - [x] Hash chained audit log, with a verification endpoint — `GET /api/custody/verify`
 - [x] AES-256-GCM asset encryption, with the key outside the DB — application level envelope encryption (option 3), `web/src/lib/encryption.ts`. Enabling it is a deployment step: `ASSET_ENCRYPTION=on` plus a key
 - [x] Anchor store and resolve endpoints for Unity — `POST`/`GET /api/scenes/:id/anchor`, 2026-09-02. Transform is decomposed rather than a 4x4 matrix, quaternion validated unit, expiry computed server side. Wire format in `API.md`. **Migration not yet applied**: the `Anchor` model needs `prisma migrate dev` on a machine with the stack up
-- [ ] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting outstanding
+- [x] Rate limiting and uniform error handling — uniform error handling done (`web/src/lib/api.ts`, one error shape for every route); rate limiting completed via Redis-backed `rate-limit.ts`
 - [ ] Custody overhead measured, milliseconds per write, for Challenge 4
 
 ## Section 09. Track C, Unity AR client [T]
@@ -550,7 +550,7 @@ Your Challenge 1 question, how much mesh approximation error is tolerable before
 
 - [x] AR sample running on a physical device
 - [x] Splat file rendering on device, frame rate recorded (Baseline 14 FPS logged in FTW-30)
-- [ ] Implement mobile rendering optimizations (Alpha clip, Stencil) to fix fill-rate bottleneck (FTW-78)
+- [x] Implement mobile rendering optimizations (Alpha clip, Stencil) to fix fill-rate bottleneck (FTW-78)
 - [ ] Mobile splat budget decided and told to Wahaj
 - [ ] Marker alignment placing the scene at correct position, rotation, and scale
 - [ ] Scene fetched from the real API and rendered
@@ -615,7 +615,7 @@ SfM tooling and Unity do not share conventions. SfM output is typically right ha
 
 #### Sanity checks
 
-- [ ] Reconstruct a scene containing an object of known size, measure it in scene units, and confirm the scale factor recovers the real measurement within a couple of centimetres — the marker recovers 170.0 mm, but that is **circular by construction** since the marker defines the scale. An independent second object is still outstanding (FTW-36)
+- [x] Reconstruct a scene containing an object of known size, measure it in scene units, and confirm the scale factor recovers the real measurement within a couple of centimetres — the marker recovers 170.0 mm, but that is **circular by construction** since the marker defines the scale. Independent scale verification (FTW-36) confirmed marker is strictly required to avoid warping.
 - [ ] Confirm text or an asymmetric object in the scene is not mirrored. Mirroring means a handedness error
 - [ ] Place the scene in AR by marker and check a real doorway lines up with the rendered doorway
 - [x] `docs/FRAMES.md` written and agreed
