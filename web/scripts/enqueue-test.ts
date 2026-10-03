@@ -50,7 +50,7 @@ async function main() {
     }
   })
 
-  console.log(`Created Job ${job.id} for Scene ${scene.id}`)
+  console.log(`Created Job ${job.id} for Scene ${scene.id} with Asset ${asset.id}`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
